@@ -1,0 +1,36 @@
+# Python bytecode
+*.pyc
+__pycache__/
+
+# Virtual environment
+.env/
+venv/
+env/
+
+# Database files
+*.sqlite3
+db.sqlite3
+
+# Log files
+*.log
+
+# Media and static files (if dynamically generated or uploaded)
+media/
+static_collected/
+
+# IDE specific files (e.g., PyCharm)
+.idea/
+
+# Operating System specific files
+.DS_Store
+Thumbs.db
+
+# Sensitive information (e.g., local settings, secret keys)
+local_settings.py
+settings_local.py # Or whatever name you use for local overrides
+secret_key.py # If stored separately
+
+# Other generated files
+.coverage
+.tox/
+.eggs/
