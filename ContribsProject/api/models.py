@@ -1,5 +1,6 @@
 from django.db import models
 
+
 class Office(models.Model):
     office_type = models.CharField(max_length=200)
     office_level = models.CharField(max_length=200)

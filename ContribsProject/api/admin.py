@@ -2,6 +2,7 @@ from django.contrib import admin
 from .models import Office, Party, Candidate, Employer, Contributor, Contribution
 
 
+
 @admin.register(Office)
 class OfficeAdmin(admin.ModelAdmin):
     list_display = ("office_type", "office_level")
