@@ -10,22 +10,27 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
-from pathlib import Path
+import environ
+import os
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+# Initialize environment variables
+env = environ.Env(
+    DEBUG=(bool, False)
+)
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
+# Read .env file
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-l^_di38xx38)n+xm@67(uq7yu)yxi$1bzptujn73$)be9=5)t#'
+SECRET_KEY = env('SECRET_KEY')
+DEBUG = env('DEBUG')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['contribs.app', 'localhost', '127.0.0.1'])
 
-ALLOWED_HOSTS = []
+DATABASES = {
+    'default': env.db(),  # reads DATABASE_URL from .env
+}
 
 
 # Application definition
@@ -72,13 +77,6 @@ WSGI_APPLICATION = 'ContribsProject.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
 
 
 # Password validation
