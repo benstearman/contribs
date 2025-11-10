@@ -1,6 +1,13 @@
 from django.contrib import admin
 from .models import Office, Party, Candidate, Employer, Contributor, Contribution, FECContribution
+from import_export import resources
+from core.models import FECContribution
+from import_export.admin import ImportExportModelAdmin
 
+class FECContributionResource(resources.ModelResource):
+
+    class Meta:
+        model = FECContribution  # or 'core.Book'
 
 @admin.register(Office)
 class OfficeAdmin(admin.ModelAdmin):
@@ -82,3 +89,4 @@ class FECContributionAdmin(admin.ModelAdmin):
         }),
     )
 
+    resource_classes = [FECContributionResource]
