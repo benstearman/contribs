@@ -156,3 +156,5 @@ class FECContribution(models.Model):
 
     def __str__(self):
         return f"{self.NAME or 'Unknown'} ({self.CMTE_ID}) - ${self.TRANSACTION_AMT or 0}"
+
+

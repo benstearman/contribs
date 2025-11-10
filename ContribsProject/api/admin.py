@@ -81,3 +81,4 @@ class FECContributionAdmin(admin.ModelAdmin):
             "fields": ("MEMO_CD", "MEMO_TEXT", "IMAGE_NUM", "SUB_ID")
         }),
     )
+
