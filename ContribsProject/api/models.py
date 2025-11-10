@@ -29,8 +29,9 @@ class Contribution(models.Model):
     receipt_date = models.DateTimeField("receipt date")
 
 class FECContribution(models.Model):
-    CMTE_ID = models.CharField(primary_key=True,
+    CMTE_ID = models.CharField(
         "Filer identification number",
+        primary_key=True,
         max_length=9,
         help_text="9-character alpha-numeric code assigned to a committee by the FEC."
     )
