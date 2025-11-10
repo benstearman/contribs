@@ -1,7 +1,6 @@
 from django.contrib import admin
 from .models import Office, Party, Candidate, Employer, Contributor, Contribution, FECContribution
 from import_export import resources
-from core.models import FECContribution
 from import_export.admin import ImportExportModelAdmin
 
 class FECContributionResource(resources.ModelResource):
@@ -49,7 +48,7 @@ class ContributionAdmin(admin.ModelAdmin):
 
 
 @admin.register(FECContribution)
-class FECContributionAdmin(admin.ModelAdmin):
+class FECContributionAdmin(ImportExportModelAdmin):
     list_display = (
         "NAME",
         "CMTE_ID",
