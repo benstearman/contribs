@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Office, Party, Candidate, Employer, Contributor, Contribution, FECContribution
+from .models import Office, Party, Candidate, Employer, Contributor, Contribution, FECContribution, Committee
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
 
@@ -89,3 +89,22 @@ class FECContributionAdmin(ImportExportModelAdmin):
     )
 
     resource_classes = [FECContributionResource]
+
+
+class CommitteeResource(resources.ModelResource):
+    class Meta:
+        model = Committee
+        import_id_fields = ('CMTE_ID',)
+        fields = (
+            'CMTE_ID', 'CMTE_NM', 'TRES_NM', 'CMTE_ST1', 'CMTE_ST2',
+            'CMTE_CITY', 'CMTE_ST', 'CMTE_ZIP', 'CMTE_DSGN', 'CMTE_TP',
+            'CMTE_PTY_AFFILIATION', 'CMTE_FILING_FREQ', 'ORG_TP',
+            'CONNECTED_ORG_NM', 'CAND_ID'
+        )
+
+@admin.register(Committee)
+class CommitteeAdmin(ImportExportModelAdmin):
+    resource_class = CommitteeResource
+    list_display = ('CMTE_ID', 'CMTE_NM', 'TRES_NM', 'CMTE_CITY', 'CMTE_ST', 'CMTE_TP')
+    search_fields = ('CMTE_ID', 'CMTE_NM', 'TRES_NM', 'CAND_ID')
+    list_filter = ('CMTE_ST', 'CMTE_DSGN', 'CMTE_TP', 'CMTE_PTY_AFFILIATION', 'ORG_TP')
