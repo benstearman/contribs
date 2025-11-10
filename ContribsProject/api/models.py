@@ -144,8 +144,8 @@ class FECContribution(models.Model):
     )
 
     class Meta:
-        verbose_name = "Contribution"
-        verbose_name_plural = "Contributions"
+        verbose_name = "FEC Contribution"
+        verbose_name_plural = "FEC Contributions"
         ordering = ["-TRANSACTION_DT"]
         indexes = [
             models.Index(fields=["CMTE_ID"]),
