@@ -31,7 +31,6 @@ class Contribution(models.Model):
 class FECContribution(models.Model):
     CMTE_ID = models.CharField(
         "Filer identification number",
-        primary_key=True,
         max_length=9,
         help_text="9-character alpha-numeric code assigned to a committee by the FEC."
     )
@@ -140,7 +139,7 @@ class FECContribution(models.Model):
     )
     SUB_ID = models.BigIntegerField(
         "FEC record number",
-        unique=True,
+        primary_key=True, unique=True,
         help_text="Unique row ID (required)."
     )
 
