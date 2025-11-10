@@ -28,8 +28,6 @@ class Contribution(models.Model):
     amount = models.IntegerField(default=0)
     receipt_date = models.DateTimeField("receipt date")
 
-from django.db import models
-
 class FECContribution(models.Model):
     CMTE_ID = models.CharField(
         "Filer identification number",
