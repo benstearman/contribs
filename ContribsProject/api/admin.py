@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Office, Party, Candidate, Employer, Contributor, Contribution
+from .models import Office, Party, Candidate, Employer, Contributor, Contribution, FECContribution
 
 
 
