@@ -96,6 +96,7 @@ services:
       # Persist Portainer's configuration data
       - portainer_data:/data
 
+  # --- 5. pgAdmin Service ---
   pgadmin:
     image: dpage/pgadmin4
     container_name: contribs_pgadmin
@@ -115,9 +116,30 @@ services:
     depends_on:
       - db # Ensure the database is running before pgAdmin starts
 
+# --- 6. Wiki.js Service ---
+  wiki:
+    image: ghcr.io/requarks/wiki:2
+    container_name: contribs_wiki
+    restart: unless-stopped
+    environment:
+      # Database Connection (Reusing your existing 'db' service)
+      DB_TYPE: postgres
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_NAME: wiki # We must manually create this DB inside Postgres
+    ports:
+      - "3000:3000" # Expose Wiki on port 3000
+    depends_on:
+      - db
+    volumes:
+      - wiki_data:/wiki # Persist wiki uploads/assets
+
 # --- Volumes ---
 volumes:
   postgres_data:
   caddy_data: # Define the new volume for Caddy data/certs
   portainer_data: # Define the new volume for Portainer data
   pgadmin_data: # Add a new volume for pgAdmin persistence
+  wiki_data:
