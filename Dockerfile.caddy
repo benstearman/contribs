@@ -1,0 +1,14 @@
+# Dockerfile.caddy
+
+# Stage 1: The builder stage (used to compile Caddy with plugins)
+FROM caddy:builder AS builder
+
+# Compile Caddy with the required Cloudflare DNS plugin
+RUN xcaddy build \
+  --with github.com/caddy-dns/cloudflare
+
+# Stage 2: The final runtime image
+FROM caddy:latest
+
+# Copy the new caddy executable from the builder stage
+COPY --from=builder /usr/bin/caddy /usr/bin/caddy
