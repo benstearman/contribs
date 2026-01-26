@@ -1,8 +1,10 @@
 # Caddyfile
 
-# Change from ${CADDY_DOMAIN}:443 to the literal domain
-contribs.app:443 { 
-  reverse_proxy web:8000
+{$CADDY_DOMAIN} {
+    reverse_proxy web:8000 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+    }
 }
 
 # Vaultwarden (Bitwarden)
