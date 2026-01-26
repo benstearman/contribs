@@ -2,22 +2,7 @@
 
 # Change from ${CADDY_DOMAIN}:443 to the literal domain
 contribs.app:443 { 
-
   reverse_proxy web:8000
-
-  tls {
-    dns cloudflare { 
-      # Environment variable is still needed for the token!
-      api_token {env.CLOUDFLARE_API_TOKEN}
-    }
-  }
-  
-  # 3. Standard API Security Headers
-  header {
-    Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-    X-Content-Type-Options "nosniff"
-    X-Frame-Options "SAMEORIGIN"
-  }
 }
 
 # Vaultwarden (Bitwarden)
