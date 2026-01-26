@@ -27,7 +27,8 @@ SECRET_KEY = 'django-insecure-3)wtpxj6xz@++&44p^3eh%5b22ew5nczv=7&m-zjdu*a#hl+t+
 DEBUG = True
 
 # This version cleans up any accidental spaces in your .env string
-ALLOWED_HOSTS = [host.strip() for host in os.environ.get("ALLOWED_HOSTS", "localhost").split(" ") if host.strip()]
+# Temporary change to test
+ALLOWED_HOSTS = ['contribs.app', 'www.contribs.app', 'localhost', '127.0.0.1']
 
 # Application definition
 
