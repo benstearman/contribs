@@ -19,3 +19,20 @@ contribs.app:443 {
     X-Frame-Options "SAMEORIGIN"
   }
 }
+
+# Vaultwarden (Bitwarden)
+vault.{$CADDY_DOMAIN} {
+    encode gzip
+
+    # Secure headers often recommended for Vaultwarden
+    header {
+        # Enable HTTP Strict Transport Security (HSTS)
+        Strict-Transport-Security "max-age=31536000;"
+        # Disable FLoC tracking
+        Permissions-Policy "interest-cohort=()"
+    }
+
+    # Proxy traffic to the container (internal port 80)
+    # Caddy v2 handles WebSockets automatically
+    reverse_proxy vaultwarden:80
+}

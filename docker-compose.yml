@@ -1,165 +1,123 @@
 services:
-  # --- 1. Web Service (Django/DRF Backend) ---
+  # --- 1. Web Service (Django Backend) ---
   web:
-    build: .
+    build: ./backend
     container_name: contribs_web
-    
-    # *** IMPORTANT: We removed the root-level 'env_file' key to fix the validation error. ***
-    
-    # Command to run the Django development server
-    command: python manage.py runserver 0.0.0.0:${WEB_PORT}
-    
-    # Maps local project root (containing 'backend/') to the container's working directory
+    command: python manage.py runserver 0.0.0.0:8000
     volumes:
-      - .:/srv/contribs/backend
-      
-    # Maps host port to container port (using WEB_PORT from .env)
-    # ports:
-    #  - "${WEB_PORT}:${WEB_PORT}"
-      
-    # Passes environment variables into the Django container for settings.py to read
+      - ./backend:/app
+    ports:
+      - "8000:8000"
     environment:
-      # Database Connection
       - DB_NAME=${POSTGRES_DB}
       - DB_USER=${POSTGRES_USER}
       - DB_PASSWORD=${POSTGRES_PASSWORD}
-      - DB_HOST=${DB_HOST}
-      - DB_PORT=${DB_PORT}
-      
-      # Django Configuration
+      - DB_HOST=db
+      - DB_PORT=5432
       - SECRET_KEY=${DJANGO_SECRET_KEY}
       - ALLOWED_HOSTS=${DJANGO_ALLOWED_HOSTS}
-      - PYTHONUNBUFFERED=1 # Ensures Python output is immediately visible
-      
-    # Ensures the web service starts only after the db service is available
+      - PYTHONUNBUFFERED=1
     depends_on:
       - db
 
-# --- 2. Caddy Reverse Proxy Service ---
+  # --- 2. Caddy Reverse Proxy ---
   caddy:
-    # --- CRITICAL CHANGE ---
-    build: 
+    build:
       context: .
       dockerfile: Dockerfile.caddy
-    # -----------------------
-      
     container_name: contribs_caddy
+    restart: always
     ports:
-    #  - "80:80"
+      - "80:80"
       - "443:443"
-    
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
-    
     environment:
       CADDY_DOMAIN: ${CADDY_DOMAIN}
       CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN}
-      CADDY_LOG_LEVEL: ${CADDY_LOG_LEVEL}
-    
     depends_on:
       - web
-  # --- 3. Database Service (PostgreSQL) ---
+      - wiki
+      - vaultwarden
+
+  # --- 3. Database (PostgreSQL) ---
   db:
     image: postgres:15-alpine
     container_name: contribs_db
-    
-    # Environment variables to initialize the PostgreSQL database
-    # These use the values defined in your .env file
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      
-    # Use a named volume to persist the database data
     volumes:
       - postgres_data:/var/lib/postgresql/data/
 
-# --- 4. Portainer Management Interface ---
+  # --- 4. Portainer (Management) ---
   portainer:
     image: portainer/portainer-ce:latest
     container_name: contribs_portainer
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
-    
-    # Expose the Portainer UI port (9443 is the standard HTTPS port)
-    # You will access this via the Ubuntu Guest IP: 10.0.0.101:9443
     ports:
       - "9000:9000"
-      #- "9443:9443"
-    
     volumes:
-      # This binds the Docker host socket into the container.
-      # This allows Portainer to manage Docker itself.
       - /var/run/docker.sock:/var/run/docker.sock
-      # Persist Portainer's configuration data
       - portainer_data:/data
 
-  # --- 5. pgAdmin Service ---
+  # --- 5. PGAdmin (Database GUI) ---
   pgadmin:
     image: dpage/pgadmin4
     container_name: contribs_pgadmin
     restart: always
     environment:
-      # Required for initial setup
       PGADMIN_DEFAULT_EMAIL: admin@contribs.app
-      PGADMIN_DEFAULT_PASSWORD: CdhvujxmQxpVPEa1 # CHOOSE A SECURE PASSWORD
-      # Configure the default server connection (to your existing 'db' container)
+      PGADMIN_DEFAULT_PASSWORD: ${POSTGRES_PASSWORD} # Or a specific one
       PGADMIN_CONFIG_SERVER_MODE: 'False'
     ports:
-      # Map the host's 5050 port to the container's 80 port (default for pgAdmin web interface)
       - "5050:80"
     volumes:
-      # Keep pgAdmin's configuration persistent
       - pgadmin_data:/var/lib/pgadmin
     depends_on:
-      - db # Ensure the database is running before pgAdmin starts
+      - db
 
-# --- 6. Wiki.js Service ---
+  # --- 6. Wiki.js (Documentation) ---
   wiki:
     image: ghcr.io/requarks/wiki:2
     container_name: contribs_wiki
     restart: unless-stopped
     environment:
-      # Database Connection (Reusing your existing 'db' service)
       DB_TYPE: postgres
       DB_HOST: db
       DB_PORT: 5432
       DB_USER: ${POSTGRES_USER}
-      DB_PASS: ${POSTGRES_PASSWORD}
-      DB_NAME: wiki # We must manually create this DB inside Postgres
+      DB_PASS: ${POSTGRES_PASSWORD} # Fixed variable name
+      DB_NAME: wiki
     ports:
-      - "3000:3000" # Expose Wiki on port 3000
+      - "3000:3000"
+    volumes:
+      - wiki_data:/wiki
     depends_on:
       - db
-    volumes:
-      - wiki_data:/wiki # Persist wiki uploads/assets
 
-# --- 7. Vaultwarden (Bitwarden) Service ---
+  # --- 7. Vaultwarden (Passwords) ---
   vaultwarden:
     image: vaultwarden/server:latest
     container_name: contribs_vaultwarden
     restart: unless-stopped
     environment:
-      # Connect to existing Postgres DB
       DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/vaultwarden"
-      # crucial for security; set to 'false' after you create your account!
-      SIGNUPS_ALLOWED: "true"
-      # Optional: Enable the Admin Interface (Generate a token to use this)
-      # ADMIN_TOKEN: "some_long_random_string_here" 
+      SIGNUPS_ALLOWED: "true" # Change to 'false' after creating your account
     volumes:
       - vaultwarden_data:/data
-    ports:
-      - "8001:80" # Access locally at http://contribs.app:8001
+    # No ports exposed: Caddy proxies to internal port 80
     depends_on:
       - db
 
-# --- Volumes ---
 volumes:
   postgres_data:
-  caddy_data: # Define the new volume for Caddy data/certs
-  portainer_data: # Define the new volume for Portainer data
-  pgadmin_data: # Add a new volume for pgAdmin persistence
+  caddy_data:
+  portainer_data:
+  pgadmin_data:
   wiki_data:
   vaultwarden_data:
