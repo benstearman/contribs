@@ -34,8 +34,8 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
     environment:
-      CADDY_DOMAIN: ${CADDY_DOMAIN}
-      CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN}
+      - CADDY_DOMAIN: ${CADDY_DOMAIN}
+      - CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN}
     depends_on:
       - web
       - wiki
@@ -46,9 +46,9 @@ services:
     image: postgres:15-alpine
     container_name: contribs_db
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      - POSTGRES_DB: ${POSTGRES_DB}
+      - POSTGRES_USER: ${POSTGRES_USER}
+      - POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data/
 
@@ -71,9 +71,10 @@ services:
     container_name: contribs_pgadmin
     restart: always
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@contribs.app
-      PGADMIN_DEFAULT_PASSWORD: ${POSTGRES_PASSWORD} # Or a specific one
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      - PGADMIN_DEFAULT_EMAIL: admin@contribs.app
+      - PGADMIN_DEFAULT_PASSWORD: ${POSTGRES_PASSWORD} # Or a specific one
+      - PGADMIN_CONFIG_SERVER_MODE: 'False'
+      - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False
     ports:
       - "5050:80"
     volumes:
@@ -87,12 +88,12 @@ services:
     container_name: contribs_wiki
     restart: unless-stopped
     environment:
-      DB_TYPE: postgres
-      DB_HOST: db
-      DB_PORT: 5432
-      DB_USER: ${POSTGRES_USER}
-      DB_PASS: ${POSTGRES_PASSWORD} # Fixed variable name
-      DB_NAME: wiki
+      - DB_TYPE: postgres
+      - DB_HOST: db
+      - DB_PORT: 5432
+      - DB_USER: ${POSTGRES_USER}
+      - DB_PASS: ${POSTGRES_PASSWORD} # Fixed variable name
+      - DB_NAME: wiki
     ports:
       - "3000:3000"
     volumes:
@@ -106,8 +107,8 @@ services:
     container_name: contribs_vaultwarden
     restart: unless-stopped
     environment:
-      DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/vaultwarden"
-      SIGNUPS_ALLOWED: "true" # Change to 'false' after creating your account
+      - DATABASE_URL: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/vaultwarden"
+      - SIGNUPS_ALLOWED: "true" # Change to 'false' after creating your account
     volumes:
       - vaultwarden_data:/data
     # No ports exposed: Caddy proxies to internal port 80
