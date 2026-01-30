@@ -122,20 +122,17 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# 1. Robust ALLOWED_HOSTS parsing
-# This handles spaces, commas, and empty strings from your .env
-raw_hosts = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1")
-ALLOWED_HOSTS = [host.strip() for host in raw_hosts.replace(',', ' ').split() if host.strip()]
+# This takes the string from .env and turns it into a real list
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost").replace(',', ' ').split()
 
-# 2. Proxy & HTTPS Security Settings
-# This is the "Secret Sauce" for Cloudflare
-# It tells Django: "If the proxy says this is HTTPS, believe it."
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
-# This ensures Django uses the domain name passed by Caddy/Cloudflare
 USE_X_FORWARDED_HOST = True
 
 # 3. CSRF Trusted Origins
 # Required for admin logins and form submissions over HTTPS
 raw_csrf = os.environ.get("CSRF_TRUSTED_ORIGINS", "https://contribs.app")
-CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in raw_csrf.replace(',', ' ').split() if origin.strip()]
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip() 
+    for origin in os.environ.get("CSRF_TRUSTED_ORIGINS", "").replace(',', ' ').split() 
+    if origin.strip()
+]
