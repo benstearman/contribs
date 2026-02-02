@@ -16,9 +16,10 @@ class CommitteeAdmin(admin.ModelAdmin):
 
 @admin.register(Candidate)
 class CandidateAdmin(admin.ModelAdmin):
-    list_display = ('last_name', 'first_name', 'office', 'party')
-    list_filter = ('party', 'office')
-    search_fields = ('last_name', 'first_name')
+    # Updated to use the new field names from the FEC dictionary
+    list_display = ('CAND_NAME', 'CAND_ID', 'CAND_OFFICE', 'CAND_PTY_AFFILIATION', 'CAND_ELECTION_YR')
+    list_filter = ('CAND_PTY_AFFILIATION', 'CAND_OFFICE', 'CAND_ELECTION_YR')
+    search_fields = ('CAND_NAME', 'CAND_ID')
 
 # Registering the simpler models with default views
 admin.site.register(Office)
