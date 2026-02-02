@@ -10,10 +10,24 @@ class Party(models.Model):
     name = models.CharField(max_length=200)
 
 class Candidate(models.Model):
-    office = models.ForeignKey(Office, on_delete=models.CASCADE)
-    first_name = models.CharField(max_length=200)
-    last_name = models.CharField(max_length=200)
-    party = models.ForeignKey(Party, on_delete=models.CASCADE)
+    CAND_ID = models.CharField("Candidate ID", max_length=9, primary_key=True)
+    CAND_NAME = models.CharField("Candidate Name", max_length=200, null=True, blank=True)
+    CAND_PTY_AFFILIATION = models.CharField("Party", max_length=3, null=True, blank=True)
+    CAND_ELECTION_YR = models.IntegerField("Election Year", null=True, blank=True)
+    CAND_OFFICE_ST = models.CharField("State", max_length=2, null=True, blank=True)
+    CAND_OFFICE = models.CharField("Office", max_length=1, null=True, blank=True)
+    CAND_OFFICE_DISTRICT = models.CharField("District", max_length=2, null=True, blank=True)
+    CAND_ICI = models.CharField("Incumbent Status", max_length=1, null=True, blank=True)
+    CAND_STATUS = models.CharField("Status", max_length=1, null=True, blank=True)
+    CAND_PCC = models.CharField("Principal Committee", max_length=9, null=True, blank=True)
+    CAND_ST1 = models.CharField("Street 1", max_length=34, null=True, blank=True)
+    CAND_ST2 = models.CharField("Street 2", max_length=34, null=True, blank=True)
+    CAND_CITY = models.CharField("City", max_length=30, null=True, blank=True)
+    CAND_ST = models.CharField("Mailing State", max_length=2, null=True, blank=True)
+    CAND_ZIP = models.CharField("ZIP", max_length=9, null=True, blank=True)
+
+    class Meta:
+        db_table = "api_candidate"
 
 class Employer(models.Model):
     name = models.CharField(max_length=200)
