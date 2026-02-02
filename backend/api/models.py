@@ -163,6 +163,7 @@ class Committee(models.Model):
         "Committee ID",
         max_length=9,
         unique=True,
+        primary_key=True,  # This replaces the automatic 'id' column
         help_text="9-character ID assigned by the FEC."
     )
     CMTE_NM = models.CharField(
