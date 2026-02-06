@@ -39,6 +39,7 @@ class Contributor(models.Model):
 
 class Contribution(models.Model):
     contributor = models.ForeignKey(Contributor, on_delete=models.CASCADE)
+    committee = models.ForeignKey(Committee, on_delete=models.CASCADE)
     amount = models.IntegerField(default=0)
     receipt_date = models.DateTimeField("receipt date")
 
