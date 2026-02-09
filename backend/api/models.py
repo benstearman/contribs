@@ -10,10 +10,24 @@ class Party(models.Model):
     name = models.CharField(max_length=200)
 
 class Candidate(models.Model):
-    office = models.ForeignKey(Office, on_delete=models.CASCADE)
-    first_name = models.CharField(max_length=200)
-    last_name = models.CharField(max_length=200)
-    party = models.ForeignKey(Party, on_delete=models.CASCADE)
+    CAND_ID = models.CharField("Candidate ID", max_length=9, primary_key=True)
+    CAND_NAME = models.CharField("Candidate Name", max_length=200, null=True, blank=True)
+    CAND_PTY_AFFILIATION = models.CharField("Party", max_length=3, null=True, blank=True)
+    CAND_ELECTION_YR = models.IntegerField("Election Year", null=True, blank=True)
+    CAND_OFFICE_ST = models.CharField("State", max_length=2, null=True, blank=True)
+    CAND_OFFICE = models.CharField("Office", max_length=1, null=True, blank=True)
+    CAND_OFFICE_DISTRICT = models.CharField("District", max_length=2, null=True, blank=True)
+    CAND_ICI = models.CharField("Incumbent Status", max_length=1, null=True, blank=True)
+    CAND_STATUS = models.CharField("Status", max_length=1, null=True, blank=True)
+    CAND_PCC = models.CharField("Principal Committee", max_length=9, null=True, blank=True)
+    CAND_ST1 = models.CharField("Street 1", max_length=34, null=True, blank=True)
+    CAND_ST2 = models.CharField("Street 2", max_length=34, null=True, blank=True)
+    CAND_CITY = models.CharField("City", max_length=30, null=True, blank=True)
+    CAND_ST = models.CharField("Mailing State", max_length=2, null=True, blank=True)
+    CAND_ZIP = models.CharField("ZIP", max_length=9, null=True, blank=True)
+
+    class Meta:
+        db_table = "api_candidate"
 
 class Employer(models.Model):
     name = models.CharField(max_length=200)
@@ -23,8 +37,116 @@ class Contributor(models.Model):
     zip_code = models.CharField(max_length=10)
     employer = models.ForeignKey(Employer, on_delete=models.CASCADE)
 
+class Committee(models.Model):
+    CMTE_ID = models.CharField(
+        "Committee ID",
+        max_length=9,
+        unique=True,
+        primary_key=True,  # This replaces the automatic 'id' column
+        help_text="9-character ID assigned by the FEC."
+    )
+    CMTE_NM = models.CharField(
+        "Committee Name",
+        max_length=200,
+        blank=True,
+        null=True
+    )
+    TRES_NM = models.CharField(
+        "Treasurer's Name",
+        max_length=90,
+        blank=True,
+        null=True,
+        help_text="Officially registered treasurer for the committee."
+    )
+    CMTE_ST1 = models.CharField(
+        "Street 1",
+        max_length=34,
+        blank=True,
+        null=True
+    )
+    CMTE_ST2 = models.CharField(
+        "Street 2",
+        max_length=34,
+        blank=True,
+        null=True
+    )
+    CMTE_CITY = models.CharField(
+        "City",
+        max_length=30,
+        blank=True,
+        null=True
+    )
+    CMTE_ST = models.CharField(
+        "State",
+        max_length=2,
+        blank=True,
+        null=True
+    )
+    CMTE_ZIP = models.CharField(
+        "ZIP Code",
+        max_length=9,
+        blank=True,
+        null=True
+    )
+    CMTE_DSGN = models.CharField(
+        "Committee Designation",
+        max_length=1,
+        blank=True,
+        null=True,
+        help_text="A=Authorized, B=Lobbyist, D=Leadership, J=Joint, P=Principal, U=Unauthorized"
+    )
+    CMTE_TP = models.CharField(
+        "Committee Type",
+        max_length=1,
+        blank=True,
+        null=True,
+        help_text="Single-character committee type code."
+    )
+    CMTE_PTY_AFFILIATION = models.CharField(
+        "Party Affiliation",
+        max_length=3,
+        blank=True,
+        null=True
+    )
+    CMTE_FILING_FREQ = models.CharField(
+        "Filing Frequency",
+        max_length=1,
+        blank=True,
+        null=True,
+        help_text="A=Admin terminated, D=Debt, M=Monthly, Q=Quarterly, T=Terminated, W=Waived"
+    )
+    ORG_TP = models.CharField(
+        "Interest Group Category",
+        max_length=1,
+        blank=True,
+        null=True,
+        help_text="C=Corporation, L=Labor, M=Membership, T=Trade, V=Cooperative, W=Corp w/o capital stock"
+    )
+    CONNECTED_ORG_NM = models.CharField(
+        "Connected Organization Name",
+        max_length=200,
+        blank=True,
+        null=True
+    )
+    CAND_ID = models.CharField(
+        "Candidate ID",
+        max_length=9,
+        blank=True,
+        null=True,
+        help_text="Candidate ID (if applicable)"
+    )
+
+    class Meta:
+        db_table = "api_committee"
+        verbose_name = "FEC Committee"
+        verbose_name_plural = "FEC Committees"
+
+    def __str__(self):
+        return f"{self.CMTE_NM or self.CMTE_ID}"
+
 class Contribution(models.Model):
     contributor = models.ForeignKey(Contributor, on_delete=models.CASCADE)
+    committee = models.ForeignKey(Committee, on_delete=models.CASCADE)
     amount = models.IntegerField(default=0)
     receipt_date = models.DateTimeField("receipt date")
 
@@ -156,111 +278,3 @@ class FECContribution(models.Model):
 
     def __str__(self):
         return f"{self.NAME or 'Unknown'} ({self.CMTE_ID}) - ${self.TRANSACTION_AMT or 0}"
-
-
-class Committee(models.Model):
-    CMTE_ID = models.CharField(
-        "Committee ID",
-        max_length=9,
-        unique=True,
-        primary_key=True,  # This replaces the automatic 'id' column
-        help_text="9-character ID assigned by the FEC."
-    )
-    CMTE_NM = models.CharField(
-        "Committee Name",
-        max_length=200,
-        blank=True,
-        null=True
-    )
-    TRES_NM = models.CharField(
-        "Treasurer's Name",
-        max_length=90,
-        blank=True,
-        null=True,
-        help_text="Officially registered treasurer for the committee."
-    )
-    CMTE_ST1 = models.CharField(
-        "Street 1",
-        max_length=34,
-        blank=True,
-        null=True
-    )
-    CMTE_ST2 = models.CharField(
-        "Street 2",
-        max_length=34,
-        blank=True,
-        null=True
-    )
-    CMTE_CITY = models.CharField(
-        "City",
-        max_length=30,
-        blank=True,
-        null=True
-    )
-    CMTE_ST = models.CharField(
-        "State",
-        max_length=2,
-        blank=True,
-        null=True
-    )
-    CMTE_ZIP = models.CharField(
-        "ZIP Code",
-        max_length=9,
-        blank=True,
-        null=True
-    )
-    CMTE_DSGN = models.CharField(
-        "Committee Designation",
-        max_length=1,
-        blank=True,
-        null=True,
-        help_text="A=Authorized, B=Lobbyist, D=Leadership, J=Joint, P=Principal, U=Unauthorized"
-    )
-    CMTE_TP = models.CharField(
-        "Committee Type",
-        max_length=1,
-        blank=True,
-        null=True,
-        help_text="Single-character committee type code."
-    )
-    CMTE_PTY_AFFILIATION = models.CharField(
-        "Party Affiliation",
-        max_length=3,
-        blank=True,
-        null=True
-    )
-    CMTE_FILING_FREQ = models.CharField(
-        "Filing Frequency",
-        max_length=1,
-        blank=True,
-        null=True,
-        help_text="A=Admin terminated, D=Debt, M=Monthly, Q=Quarterly, T=Terminated, W=Waived"
-    )
-    ORG_TP = models.CharField(
-        "Interest Group Category",
-        max_length=1,
-        blank=True,
-        null=True,
-        help_text="C=Corporation, L=Labor, M=Membership, T=Trade, V=Cooperative, W=Corp w/o capital stock"
-    )
-    CONNECTED_ORG_NM = models.CharField(
-        "Connected Organization Name",
-        max_length=200,
-        blank=True,
-        null=True
-    )
-    CAND_ID = models.CharField(
-        "Candidate ID",
-        max_length=9,
-        blank=True,
-        null=True,
-        help_text="Candidate ID (if applicable)"
-    )
-
-    class Meta:
-        db_table = "api_committee"
-        verbose_name = "FEC Committee"
-        verbose_name_plural = "FEC Committees"
-
-    def __str__(self):
-        return f"{self.CMTE_NM or self.CMTE_ID}"
