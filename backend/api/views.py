@@ -1,7 +1,7 @@
-from models import Contributor, Contribution
+from .models import Contributor, Contribution
 from rest_framework import permissions, viewsets
 
-from serializers import ContributionSerializer, ContributorSerializer
+from .serializers import ContributionSerializer, ContributorSerializer
 
 
 class ContributionViewSet(viewsets.ModelViewSet):

@@ -135,6 +135,6 @@ USE_X_FORWARDED_HOST = True
 raw_csrf = os.environ.get("CSRF_TRUSTED_ORIGINS", "https://contribs.app")
 CSRF_TRUSTED_ORIGINS = [
     origin.strip() 
-    for origin in os.environ.get("CSRF_TRUSTED_ORIGINS", "").replace(',', ' ').split() 
+    for origin in os.environ.get("CSRF_TRUSTED_ORIGINS", "https://contribs.app").replace(',', ' ').split() 
     if origin.strip()
 ]

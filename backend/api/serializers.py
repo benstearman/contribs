@@ -1,4 +1,4 @@
-from models import Contribution, Contributor
+from .models import Contribution, Contributor
 from rest_framework import serializers
 
 
