@@ -4,8 +4,8 @@ from rest_framework import routers
 from api import views
 
 router = routers.DefaultRouter()
-router.register(r"contribution", views.ContributionViewSet)
-router.register(r"contributor", views.ContributorViewSet)
+router.register(r"contributions", views.ContributionViewSet)
+router.register(r"contributors", views.ContributorViewSet)
 
 # Wire up our API using automatic URL routing.
 # Additionally, we include login URLs for the browsable API.
