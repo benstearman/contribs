@@ -4,6 +4,10 @@ class Party(models.Model):
     id = models.CharField(primary_key=True, max_length=3) # FEC uses 3-letter codes
     name = models.CharField(max_length=200)
 
+    class Meta:
+        verbose_name = "Party"
+        verbose_name_plural = "Parties"
+
     def __str__(self):
         return f"{self.name} ({self.id})"
 
@@ -65,7 +69,7 @@ class Contribution(models.Model):
 
     class Meta:
         ordering = ['-receipt_date']
-        
+
 class FECContribution(models.Model):
     CMTE_ID = models.CharField(
         "Filer identification number",
