@@ -15,7 +15,7 @@ class Candidate(models.Model):
     CAND_ID = models.CharField("Candidate ID", max_length=9, primary_key=True)
     CAND_NAME = models.CharField("Candidate Name", max_length=200, db_index=True)
     CAND_PTY_AFFILIATION = models.ForeignKey(Party, on_delete=models.SET_NULL, null=True, blank=True)
-    CAND_ELECTION_YR = models.IntegerField("Election Year", db_index=True)
+    CAND_ELECTION_YR = models.IntegerField("Election Year", db_index=True, null=True, blank=True)
     CAND_OFFICE_ST = models.CharField("State", max_length=2, null=True, blank=True)
     CAND_OFFICE = models.CharField("Office", max_length=1, choices=[('H', 'House'), ('S', 'Senate'), ('P', 'President')])
     CAND_OFFICE_DISTRICT = models.CharField("District", max_length=2, null=True, blank=True)
