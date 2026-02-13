@@ -5,11 +5,8 @@ from .serializers import ContributionSerializer, ContributorSerializer
 
 
 class ContributionViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows users to be viewed or edited.
-    """
-
-    queryset = Contribution.objects.all().order_by("receipt_date")
+    # This change reduces 100+ database hits to just 1
+    queryset = Contribution.objects.select_related('contributor', 'committee').all().order_by("receipt_date")
     serializer_class = ContributionSerializer
     permission_classes = [permissions.IsAuthenticated]
 

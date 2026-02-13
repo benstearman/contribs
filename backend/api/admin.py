@@ -34,11 +34,12 @@ class ContributorAdmin(admin.ModelAdmin):
 @admin.register(Contribution)
 class ContributionAdmin(admin.ModelAdmin):
     list_display = ('contributor', 'committee', 'amount', 'receipt_date')
-    list_filter = ('receipt_date',)
-    date_hierarchy = 'receipt_date'
-    # Prevents N+1 queries in the admin list view
-    list_select_related = ('contributor', 'committee')
+    # Use raw_id_fields so the admin doesn't crash trying to load 100k+ items into a dropdown
     raw_id_fields = ('contributor', 'committee')
+    # Optimizes the admin list view SQL
+    list_select_related = ('contributor', 'committee')
+    # Speeds up the page by not calculating the total count of millions of rows
+    show_full_result_count = False
 
 @admin.register(FECContribution)
 class FECContributionAdmin(admin.ModelAdmin):
