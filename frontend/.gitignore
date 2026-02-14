@@ -1,15 +1,34 @@
-*.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
 /captures
+
+# Built artifacts
+bin/
+gen/
+out/
+/build
+.gradle
 .externalNativeBuild
 .cxx
+
+# Local configuration files (Do NOT commit these)
 local.properties
+.env
+.env.*
+
+# Android Studio / IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Device and system specific files
+captures/
+.DS_Store
+Thumbs.db
+
+# Keystore files (Security risk)
+*.jks
+*.keystore
+*.p12
+
+# Google Services (if used later)
+google-services.json
