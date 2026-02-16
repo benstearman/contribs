@@ -7,7 +7,6 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
-import androidx.compose.material3.Typography // Ensure this is the correct import
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
