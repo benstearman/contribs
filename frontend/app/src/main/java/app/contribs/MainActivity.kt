@@ -16,6 +16,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import app.contribs.ui.home.CandidateListScreen
 import app.contribs.ui.navigation.ContribsScreen
 import app.contribs.ui.navigation.bottomNavItems
 import app.contribs.ui.theme.ContribsTheme
@@ -78,7 +79,6 @@ fun ContribsBottomNavigation(navController: NavHostController) {
 }
 
 // Placeholder Screens to stop "Unresolved reference" errors
-@Composable fun CandidateListScreen() { Text("Candidates") }
 @Composable fun CommitteeListScreen() { Text("Committees") }
 @Composable fun ContributionListScreen() { Text("Contributions") }
 @Composable fun ProfileScreen() { Text("Profile") }
