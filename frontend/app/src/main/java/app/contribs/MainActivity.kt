@@ -16,11 +16,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import app.contribs.ui.home.CandidateListScreen
+import app.contribs.ui.candidates.CandidateListScreen
 import app.contribs.ui.navigation.ContribsScreen
 import app.contribs.ui.navigation.bottomNavItems
 import app.contribs.ui.theme.ContribsTheme
-import app.contribs.ui.navigation.*
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

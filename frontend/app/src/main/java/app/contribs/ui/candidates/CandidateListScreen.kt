@@ -1,4 +1,4 @@
-package app.contribs.ui.home
+package app.contribs.ui.candidates
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
@@ -11,11 +11,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import app.contribs.ui.candidates.CandidateViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CandidateListScreen(viewModel: CandidateViewModel = androidx.lifecycle.viewmodel.compose.viewModel()) {
+fun CandidateListScreen(viewModel: CandidateViewModel = viewModel()) {
     val candidates by viewModel.candidates.collectAsState()
 
     Scaffold(
