@@ -9,6 +9,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -16,7 +17,16 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+
+// Feature Screen Imports
+import app.contribs.ui.candidates.CandidateDetailScreen
 import app.contribs.ui.candidates.CandidateListScreen
+import app.contribs.ui.candidates.CandidateViewModel
+import app.contribs.ui.committees.CommitteeListScreen
+import app.contribs.ui.contributions.ContributionListScreen
+import app.contribs.ui.profile.ProfileScreen
+
+// Navigation & Theme Imports
 import app.contribs.ui.navigation.ContribsScreen
 import app.contribs.ui.navigation.bottomNavItems
 import app.contribs.ui.theme.ContribsTheme
@@ -44,10 +54,40 @@ fun ContribsApp() {
             startDestination = ContribsScreen.Candidates.route,
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable(ContribsScreen.Candidates.route) { CandidateListScreen() }
-            composable(ContribsScreen.Committees.route) { CommitteeListScreen() }
-            composable(ContribsScreen.Contributions.route) { ContributionListScreen() }
-            composable(ContribsScreen.Profile.route) { ProfileScreen() }
+            // --- Candidates Flow ---
+            composable(ContribsScreen.Candidates.route) {
+                // Scoped ViewModel so the list and detail screen share the same data
+                val sharedViewModel: CandidateViewModel = viewModel()
+
+                CandidateListScreen(
+                    viewModel = sharedViewModel,
+                    onCandidateClick = { candidateId ->
+                        navController.navigate("candidate_detail/$candidateId")
+                    }
+                )
+            }
+
+            composable("candidate_detail/{candidateId}") { backStackEntry ->
+                val sharedViewModel: CandidateViewModel = viewModel()
+                val candidateId = backStackEntry.arguments?.getString("candidateId") ?: ""
+
+                CandidateDetailScreen(
+                    candidateId = candidateId,
+                    viewModel = sharedViewModel,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
+            // --- Other Tabs ---
+            composable(ContribsScreen.Committees.route) {
+                CommitteeListScreen()
+            }
+            composable(ContribsScreen.Contributions.route) {
+                ContributionListScreen()
+            }
+            composable(ContribsScreen.Profile.route) {
+                ProfileScreen()
+            }
         }
     }
 }
@@ -65,10 +105,16 @@ fun ContribsBottomNavigation(navController: NavHostController) {
                 selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
                 onClick = {
                     navController.navigate(screen.route) {
+                        // Pop up to the start destination of the graph to
+                        // avoid building up a large stack of destinations
+                        // on the back stack as users select items
                         popUpTo(navController.graph.findStartDestination().id) {
                             saveState = true
                         }
+                        // Avoid multiple copies of the same destination when
+                        // reselecting the same item
                         launchSingleTop = true
+                        // Restore state when reselecting a previously selected item
                         restoreState = true
                     }
                 }
@@ -76,8 +122,3 @@ fun ContribsBottomNavigation(navController: NavHostController) {
         }
     }
 }
-
-// Placeholder Screens to stop "Unresolved reference" errors
-@Composable fun CommitteeListScreen() { Text("Committees") }
-@Composable fun ContributionListScreen() { Text("Contributions") }
-@Composable fun ProfileScreen() { Text("Profile") }

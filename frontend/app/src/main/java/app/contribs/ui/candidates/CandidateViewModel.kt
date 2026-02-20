@@ -9,8 +9,13 @@ class CandidateViewModel : ViewModel() {
     private val _candidates = MutableStateFlow<List<Candidate>>(
         listOf(
             Candidate("P00000001", "Bernie Sanders", "DEM", "VT", "P"),
-            Candidate("P00000002", "Donald Trump", "REP", "FL", "P"),
+            Candidate("P00000002", "Donald Trump", "REP", "FL", "P")
         )
     )
     val candidates: StateFlow<List<Candidate>> = _candidates
+
+    // Add this function to find a specific candidate for the detail screen
+    fun getCandidateById(id: String): Candidate? {
+        return _candidates.value.find { it.id == id }
+    }
 }
