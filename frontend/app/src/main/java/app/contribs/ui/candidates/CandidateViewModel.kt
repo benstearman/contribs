@@ -8,7 +8,7 @@ import app.contribs.data.model.Candidate
 class CandidateViewModel : ViewModel() {
     private val _candidates = MutableStateFlow<List<Candidate>>(
         listOf(
-            Candidate("P00000001", "Bernie Sanders", "DEM", 2024, "VT", "P"),
+            Candidate("P00000001", "Bernie Sanders", "IND", 2024, "VT", "P"),
             Candidate("P00000002", "Donald Trump", "REP", 2024, "FL", "P")
         )
     )
