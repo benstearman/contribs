@@ -222,6 +222,10 @@ fun CandidateDetailScreen(
 
             }
 
+        }
+    }
+}
+
 //function for making the candidate detail page bg color change according to party
 private fun partyColor(party: String?): Color {
     return when (party) {
