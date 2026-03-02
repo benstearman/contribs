@@ -222,17 +222,6 @@ fun CandidateDetailScreen(
 
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(
-                onClick = onNavigateBack,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            ) {
-                Text("Back to List")
-            }
-        }
-    }
-}
-
 //function for making the candidate detail page bg color change according to party
 private fun partyColor(party: String?): Color {
     return when (party) {
