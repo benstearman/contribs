@@ -10,6 +10,8 @@ import androidx.compose.foundation.background //added -d
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.ui.Alignment //added -d
 import androidx.compose.ui.draw.clip //added -d
 import androidx.compose.ui.graphics.Color //added -d
@@ -27,7 +29,17 @@ fun CandidateDetailScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Candidate Detail Page") })
+            TopAppBar(
+                title = { Text("Candidate Detail Page") },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                }
+            )
         }
     ) { innerPadding ->
         Column(
