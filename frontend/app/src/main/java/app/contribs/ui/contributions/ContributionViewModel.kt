@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-class ContributionViewModelViewModel : ViewModel() {
+class ContributionViewModel : ViewModel() {
     private val _comm = MutableStateFlow<List<Contribution>>(emptyList())
     val contributions: StateFlow<List<ContribsScreen.Contributions>> = _contributions
 
