@@ -12,21 +12,21 @@ class PartyViewSet(viewsets.ReadOnlyModelViewSet):
     """View political party codes and names."""
     queryset = Party.objects.all().order_by('id')
     serializer_class = PartySerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
 class CandidateViewSet(viewsets.ModelViewSet):
     """View and edit candidate details."""
     # select_related avoids extra queries for the party name
     queryset = Candidate.objects.select_related('CAND_PTY_AFFILIATION').all().order_by("CAND_NAME")
     serializer_class = CandidateSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
 class CommitteeViewSet(viewsets.ModelViewSet):
     """View and edit committee details."""
     # select_related avoids extra queries for the supported candidate
     queryset = Committee.objects.select_related('CAND_ID').all().order_by("CMTE_NM")
     serializer_class = CommitteeSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
 class ContributionViewSet(viewsets.ModelViewSet):
     """View and edit individual contributions."""
@@ -37,10 +37,10 @@ class ContributionViewSet(viewsets.ModelViewSet):
         'committee__CAND_ID'
     ).all().order_by("-receipt_date")
     serializer_class = ContributionSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
 class ContributorViewSet(viewsets.ModelViewSet):
     """View and edit contributor profiles."""
     queryset = Contributor.objects.select_related('employer').all().order_by("full_name")
     serializer_class = ContributorSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
