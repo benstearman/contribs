@@ -2,7 +2,7 @@ package app.contribs.data.model
 
 import com.google.gson.annotations.SerializedName
 
-data class Candidate(
+data class Contribution(
     @SerializedName("CAND_ID") val id: String,
     @SerializedName("CAND_NAME") val name: String,
     @SerializedName("CAND_PTY_AFFILIATION") val party: String?,

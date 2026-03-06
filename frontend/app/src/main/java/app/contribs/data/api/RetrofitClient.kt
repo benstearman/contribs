@@ -1,6 +1,8 @@
 package app.contribs.data.api
 
 import app.contribs.data.model.Candidate
+import app.contribs.data.model.Committee
+import app.contribs.data.model.Contribution
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
