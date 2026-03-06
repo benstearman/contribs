@@ -3,10 +3,9 @@ package app.contribs.data.model
 import com.google.gson.annotations.SerializedName
 
 data class Committee(
-    @SerializedName("CAND_ID") val id: String,
-    @SerializedName("CAND_NAME") val name: String,
-    @SerializedName("CAND_PTY_AFFILIATION") val party: String?,
-    @SerializedName("CAND_ELECTION_YR") val electionYear: Int?,
-    @SerializedName("CAND_OFFICE_ST") val state: String?,
-    @SerializedName("CAND_OFFICE") val office: String?
+    @SerializedName("CMTE_ID") val id: String,
+    @SerializedName("CMTE_NM") val name: String,
+    @SerializedName("CMTE_ST") val state: String?,
+    @SerializedName("CMTE_TYPE") val type: String?,
+    @SerializedName("CMTE_PTY_AFFILIATION") val party: String?
 )
