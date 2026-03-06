@@ -8,18 +8,30 @@ import retrofit2.http.Path
 
 // 1. Define the endpoints that match your Django urls.py
 interface ContribsApiService {
-    @GET("api/candidates/")
+    @GET("candidates/")
     suspend fun getCandidates(): List<Candidate>
 
-    @GET("api/candidates/{id}/")
+    @GET("candidates/{id}/")
     suspend fun getCandidateDetail(@Path("id") id: String): Candidate
+
+    @GET("committees/")
+    suspend fun getCommittees(): List<Committee>
+
+    @GET("committees/{id}/")
+    suspend fun getCommitteeDetail(@Path("id") id: String): Committee
+
+    @GET("contributions/")
+    suspend fun getContributions(): List<Contribution>
+
+    @GET("contributions/{id}/")
+    suspend fun getContributionDetail(@Path("id") id: String): Contribution
 }
 
 // 2. Build the Retrofit instance
 object RetrofitClient {
     // 10.0.2.2 is the magic IP that tells the Android Emulator
     // to connect to the computer's localhost (where Django is running)
-    private const val BASE_URL = "http://10.0.2.2:8000/"
+    private const val BASE_URL = "https://contribs.app/api/"
 
     val instance: ContribsApiService by lazy {
         Retrofit.Builder()
