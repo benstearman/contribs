@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 
 class ContributionViewModel : ViewModel() {
     private val _contributions = MutableStateFlow<List<Contribution>>(emptyList())
-    val contributions: StateFlow<List<ContribsScreen.Contributions>> = _contributions
+    val contributions: StateFlow<List<Contribution>> = _contributions
 
     init {
         fetchContributions()
@@ -29,7 +29,7 @@ class ContributionViewModel : ViewModel() {
     }
 
     // Add this function to find a specific committee for the detail screen
-    fun getContributionById(id: String): Contribution? {
+    fun getContributionById(id: Int): Contribution? {
         return _contributions.value.find { it.id == id }
     }
 }
