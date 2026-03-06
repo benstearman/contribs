@@ -3,6 +3,7 @@ package app.contribs.data.api
 import app.contribs.data.model.Candidate
 import app.contribs.data.model.Committee
 import app.contribs.data.model.Contribution
+import app.contribs.data.model.PaginatedResponse
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
@@ -11,19 +12,19 @@ import retrofit2.http.Path
 // 1. Define the endpoints that match your Django urls.py
 interface ContribsApiService {
     @GET("candidates/")
-    suspend fun getCandidates(): List<Candidate>
+    suspend fun getCandidates(): PaginatedResponse<Candidate>
 
     @GET("candidates/{id}/")
     suspend fun getCandidateDetail(@Path("id") id: String): Candidate
 
     @GET("committees/")
-    suspend fun getCommittees(): List<Committee>
+    suspend fun getCommittees(): PaginatedResponse<Committee>
 
     @GET("committees/{id}/")
     suspend fun getCommitteeDetail(@Path("id") id: String): Committee
 
     @GET("contributions/")
-    suspend fun getContributions(): List<Contribution>
+    suspend fun getContributions(): PaginatedResponse<Contribution>
 
     @GET("contributions/{id}/")
     suspend fun getContributionDetail(@Path("id") id: String): Contribution

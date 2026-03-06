@@ -20,7 +20,7 @@ class CandidateViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val response = RetrofitClient.instance.getCandidates()
-                _candidates.value = response
+                _candidates.value = response.results
             } catch (e: Exception) {
                 e.printStackTrace()
             }

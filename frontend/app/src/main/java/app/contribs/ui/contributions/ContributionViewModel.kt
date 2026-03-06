@@ -21,7 +21,7 @@ class ContributionViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val response = RetrofitClient.instance.getContributions()
-                _contributions.value = response
+                _contributions.value = response.results
             } catch (e: Exception) {
                 e.printStackTrace()
             }

@@ -20,7 +20,7 @@ class CommitteeViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val response = RetrofitClient.instance.getCommittees()
-                _committees.value = response
+                _committees.value = response.results
             } catch (e: Exception) {
                 e.printStackTrace()
             }
