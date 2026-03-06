@@ -3,10 +3,7 @@ package app.contribs.data.model
 import com.google.gson.annotations.SerializedName
 
 data class Contribution(
-    @SerializedName("CAND_ID") val id: String,
-    @SerializedName("CAND_NAME") val name: String,
-    @SerializedName("CAND_PTY_AFFILIATION") val party: String?,
-    @SerializedName("CAND_ELECTION_YR") val electionYear: Int?,
-    @SerializedName("CAND_OFFICE_ST") val state: String?,
-    @SerializedName("CAND_OFFICE") val office: String?
+    @SerializedName("id") val id: Int,
+    @SerializedName("amount") val amount: Int?,
+    @SerializedName("receipt_date") val receiptDate: String?
 )
