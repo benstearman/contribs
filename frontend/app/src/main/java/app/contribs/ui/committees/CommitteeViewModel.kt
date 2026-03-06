@@ -3,15 +3,14 @@ package app.contribs.ui.committees
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.contribs.data.api.RetrofitClient
+import app.contribs.data.model.Committee
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import app.contribs.data.model.Committees
-import app.contribs.ui.navigation.ContribsScreen
 import kotlinx.coroutines.launch
 
 class CommitteeViewModel : ViewModel() {
-    private val _committees = MutableStateFlow<List<ContribsScreen.Committees>>(emptyList())
-    val committees: StateFlow<List<ContribsScreen.Committees>> = _committees
+    private val _committees = MutableStateFlow<List<Committee>>(emptyList())
+    val committees: StateFlow<List<Committee>> = _committees
 
     init {
         fetchCommittees()
@@ -25,13 +24,11 @@ class CommitteeViewModel : ViewModel() {
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-
         }
-
     }
 
-    // Add this function to find a specific candidate for the detail screen
-    fun getCommitteesById(id: String): ContribsScreen.Committees? {
+    // Add this function to find a specific committee for the detail screen
+    fun getCommitteeById(id: String): Committee? {
         return _committees.value.find { it.id == id }
     }
 }
