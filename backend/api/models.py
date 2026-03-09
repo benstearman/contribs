@@ -19,6 +19,8 @@ class Candidate(models.Model):
     CAND_OFFICE_ST = models.CharField("State", max_length=2, null=True, blank=True)
     CAND_OFFICE = models.CharField("Office", max_length=1, choices=[('H', 'House'), ('S', 'Senate'), ('P', 'President')])
     CAND_OFFICE_DISTRICT = models.CharField("District", max_length=2, null=True, blank=True)
+
+    total_contributions = models.DecimalField("Total Contributions", max_digits=14, decimal_places=2, default=0.00)
     
     class Meta:
         db_table = "api_candidate"
