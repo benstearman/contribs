@@ -15,6 +15,9 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.ui.Alignment //added -d
 import androidx.compose.ui.draw.clip //added -d
 import androidx.compose.ui.graphics.Color //added -d
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -25,7 +28,11 @@ fun CandidateDetailScreen(
     onNavigateBack: () -> Unit
 ) {
     // Fetch the specific candidate from the dummy data
-    val candidate = viewModel.getCandidateById(candidateId)
+    val candidate by viewModel.selectedCandidate.collectAsState()
+
+    LaunchedEffect(candidateId) {
+        viewModel.fetchCandidateDetail(candidateId)
+    }
 
     Scaffold(
         topBar = {
@@ -49,9 +56,10 @@ fun CandidateDetailScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             if (candidate != null) {
+                val candidateVal = candidate!!
 
                 //party color for background if rep or dem
-                val bgColor = partyColor(candidate.party)
+                val bgColor = partyColor(candidateVal.party)
 
 
                 //below is a photo placeholder, circle shaped and centered for portrait photo of candidate
@@ -85,7 +93,7 @@ fun CandidateDetailScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            text = candidate.name,
+                            text = candidateVal.name,
                             style = MaterialTheme.typography.headlineLarge
                         )
 
@@ -93,11 +101,11 @@ fun CandidateDetailScreen(
 
                         //party badge
                         Surface(
-                            color = partyColor(candidate.party),
+                            color = partyColor(candidateVal.party),
                             shape = CircleShape
                         ) {
                             Text(
-                                text = candidate.party ?: "N/A",
+                                text = candidateVal.party ?: "N/A",
                                 color = Color.White,
                                 style = MaterialTheme.typography.labelLarge,
                                 modifier = Modifier.padding(
@@ -117,7 +125,7 @@ fun CandidateDetailScreen(
                             shape = CircleShape
                         ) {
                             Text(
-                                text = candidate.state ?: "N/A",
+                                text = candidateVal.state ?: "N/A",
                                 color = Color.White,
                                 style = MaterialTheme.typography.labelLarge,
                                 modifier = Modifier.padding(
@@ -132,9 +140,7 @@ fun CandidateDetailScreen(
 
                 }
 
-            } else {
-                Text("Candidate not found.")
-            }
+
             //about section with candidate info, election cycle, primary office
             Card(
                 modifier = Modifier
@@ -152,8 +158,8 @@ fun CandidateDetailScreen(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    Text("Office: ${candidate?.office ?: "N/A"}")
-                    Text("Election Cycle(s): ${candidate?.electionYear ?: "N/A"}")
+                    Text("Office: ${candidateVal.office ?: "N/A"}")
+                    Text("Election Cycle(s): ${candidateVal.electionYear ?: "N/A"}")
                 }
 
 
@@ -221,7 +227,9 @@ fun CandidateDetailScreen(
 
 
             }
-
+            } else {
+                Text("Candidate not found.")
+            }
         }
     }
 }

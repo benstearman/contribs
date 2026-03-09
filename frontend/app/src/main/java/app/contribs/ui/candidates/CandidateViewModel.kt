@@ -12,6 +12,10 @@ class CandidateViewModel : ViewModel() {
     private val _candidates = MutableStateFlow<List<Candidate>>(emptyList())
     val candidates: StateFlow<List<Candidate>> = _candidates
 
+    private val _selectedCandidate = MutableStateFlow<Candidate?>(null)
+    val selectedCandidate: StateFlow<Candidate?> = _selectedCandidate
+
+
     init {
         fetchCandidates()
     }
@@ -29,8 +33,14 @@ class CandidateViewModel : ViewModel() {
 
     }
 
-    // Add this function to find a specific candidate for the detail screen
-    fun getCandidateById(id: String): Candidate? {
-        return _candidates.value.find { it.id == id }
+    fun fetchCandidateDetail(id: String) {
+        viewModelScope.launch {
+            try {
+                val candidate = RetrofitClient.instance.getCandidateDetail(id)
+                _selectedCandidate.value = candidate
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
     }
 }
