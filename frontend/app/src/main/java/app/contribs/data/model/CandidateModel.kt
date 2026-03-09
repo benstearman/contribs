@@ -8,5 +8,5 @@ data class Candidate(
     @SerializedName("CAND_PTY_AFFILIATION") val party: String?,
     @SerializedName("CAND_ELECTION_YR") val electionYear: Int?,
     @SerializedName("CAND_OFFICE_ST") val state: String?,
-    @SerializedName("CAND_OFFICE") val office: String?
+    @SerializedName("office_display") val office: String?
 )
