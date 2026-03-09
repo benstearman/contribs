@@ -28,7 +28,7 @@ fun CandidateListScreen(
             items(candidates) { candidate ->
                 ListItem(
                     headlineContent = { Text(candidate.name) },
-                    supportingContent = { Text("${candidate.party ?: "Unknown"} - ${candidate.state ?: "N/A"}") },
+                    supportingContent = { Text("${candidate.party ?: "Unknown"} - ${candidate.state ?: "N/A"} ${candidate.office ?: ""}") },
                     leadingContent = { Icon(Icons.Default.Person, contentDescription = null) },
                     // Make the entire row clickable
                     modifier = Modifier.clickable { onCandidateClick(candidate.id) }
