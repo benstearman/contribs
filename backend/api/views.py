@@ -18,7 +18,7 @@ class CandidateViewSet(viewsets.ModelViewSet):
     """View and edit candidate details."""
     # select_related avoids extra queries for the party name
     queryset = Candidate.objects.select_related('CAND_PTY_AFFILIATION').annotate(
-        total_contributions=Sum('committees__contributions__amount')
+        total_contributions=sum('committees__contributions__amount')
     ).order_by("CAND_NAME")
     serializer_class = CandidateSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
