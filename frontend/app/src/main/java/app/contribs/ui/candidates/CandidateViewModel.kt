@@ -18,7 +18,10 @@ class CandidateViewModel : ViewModel() {
     private var isLastPage = false
     var isLoading = false // Prevents duplicate API calls while loading
 
+    private val _selectedCandidate = MutableStateFlow<Candidate?>(null)
+    val selectedCandidate: StateFlow<Candidate?> = _selectedCandidate
     init {
+        fetchCandidates()
         loadNextPage() // Fetch the first page when the screen opens
     }
 
@@ -49,7 +52,27 @@ class CandidateViewModel : ViewModel() {
         }
     }
 
-    fun getCandidateById(id: String): Candidate? {
-        return _candidates.value.find { it.id == id }
+    private fun fetchCandidates() {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.instance.getCandidates()
+                _candidates.value = response.results
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
+        }
+
+    }
+
+    fun fetchCandidateDetail(id: String) {
+        viewModelScope.launch {
+            try {
+                val candidate = RetrofitClient.instance.getCandidateDetail(id)
+                _selectedCandidate.value = candidate
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
     }
 }
