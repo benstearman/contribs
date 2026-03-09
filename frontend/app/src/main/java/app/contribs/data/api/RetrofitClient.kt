@@ -8,23 +8,24 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 // 1. Define the endpoints that match your Django urls.py
 interface ContribsApiService {
     @GET("candidates/")
-    suspend fun getCandidates(): PaginatedResponse<Candidate>
+    suspend fun getCandidates(@Query("page") page: Int = 1): PaginatedResponse<Candidate>
 
     @GET("candidates/{id}/")
     suspend fun getCandidateDetail(@Path("id") id: String): Candidate
 
     @GET("committees/")
-    suspend fun getCommittees(): PaginatedResponse<Committee>
+    suspend fun getCommittees(@Query("page") page: Int = 1): PaginatedResponse<Committee>
 
     @GET("committees/{id}/")
     suspend fun getCommitteeDetail(@Path("id") id: String): Committee
 
     @GET("contributions/")
-    suspend fun getContributions(): PaginatedResponse<Contribution>
+    suspend fun getContributions(@Query("page") page: Int = 1): PaginatedResponse<Contribution>
 
     @GET("contributions/{id}/")
     suspend fun getContributionDetail(@Path("id") id: String): Contribution
