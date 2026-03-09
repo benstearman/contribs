@@ -12,9 +12,19 @@ class CandidateSerializer(serializers.ModelSerializer):
     party_name = serializers.CharField(source="CAND_PTY_AFFILIATION.name", read_only=True)
     office_display = serializers.CharField(source="get_CAND_OFFICE_display", read_only=True)
 
+    total_contributions = serializers.DecimalField(max_digits=14, decimal_places=2, read_only=True)
+
     class Meta:
         model = Candidate
-        fields = ["CAND_ID", "CAND_NAME", "party_name", "CAND_ELECTION_YR", "office_display", "CAND_OFFICE_ST"]
+        fields = [
+            "CAND_ID",
+            "CAND_NAME",
+            "party_name",
+            "CAND_ELECTION_YR",
+            "office_display",
+            "CAND_OFFICE_ST",
+            "total_contributions"
+        ]
 
 class CommitteeSerializer(serializers.ModelSerializer):
     """Details the committee and the candidate they support."""
