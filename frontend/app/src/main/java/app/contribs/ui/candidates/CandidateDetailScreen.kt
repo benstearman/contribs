@@ -188,7 +188,7 @@ fun CandidateDetailScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text("Total Received This Cycle")
-                        Text("$ —")
+                        Text("$${candidateVal.totalContributions ?: 0.00}")
                     }
 
                     Spacer(modifier = Modifier.height(8.dp))
