@@ -3,27 +3,32 @@ from django.core.management.base import BaseCommand
 from api.models import Committee, Candidate
 
 class Command(BaseCommand):
-    help = 'Imports Committees from the FEC Master file'
+    help = 'Imports Committees from the FEC Master file (cm.txt)'
 
     def add_arguments(self, parser):
-        parser.add_argument('csv_file', type=str, help='Path to the committee master CSV file')
+        parser.add_argument('csv_file', type=str, help='Path to the cm.txt file')
 
     def handle(self, *args, **kwargs):
         csv_file_path = kwargs['csv_file']
         self.stdout.write(f"Reading from {csv_file_path}...")
 
-        with open(csv_file_path, newline='', encoding='utf-8') as file:
-            reader = csv.DictReader(file, delimiter=',') 
+        with open(csv_file_path, newline='', encoding='utf-8', errors='replace') as file:
+            # Official FEC headers for Committee Master
+            fec_headers = [
+                'CMTE_ID', 'CMTE_NM', 'TRES_NM', 'CMTE_ST1', 'CMTE_ST2', 'CMTE_CITY', 
+                'CMTE_ST', 'CMTE_ZIP', 'CMTE_DSGN', 'CMTE_TP', 'CMTE_PTY_AFFILIATION', 
+                'CMTE_FILING_FREQ', 'ORG_TP', 'CONNECTED_ORG_NM', 'CAND_ID'
+            ]
+            
+            reader = csv.DictReader(file, fieldnames=fec_headers, delimiter='|') 
             processed_count = 0
             
             for row in reader:
-                # 1. Safely link candidate if they exist in the DB
                 cand_id_str = row.get('CAND_ID', '').strip()
                 candidate_obj = None
                 if cand_id_str:
                     candidate_obj = Candidate.objects.filter(CAND_ID=cand_id_str).first()
 
-                # 2. Create or Update the Committee
                 Committee.objects.update_or_create(
                     CMTE_ID=row['CMTE_ID'].strip(),
                     defaults={
