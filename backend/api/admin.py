@@ -17,7 +17,7 @@ def run_clear_candidates(modeladmin, request, queryset):
 @admin.action(description="[2] Run Candidate Import (requires cn.txt)")
 def run_candidate_import(modeladmin, request, queryset):
     try:
-        call_command('import_candidates', 'cn.txt')
+        call_command('import_candidates', 'data/cn.txt')
         modeladmin.message_user(request, "Successfully ran Candidate import!", messages.SUCCESS)
     except Exception as e:
         modeladmin.message_user(request, f"Import failed: {e}", messages.ERROR)
@@ -36,7 +36,7 @@ def run_clear_committees(modeladmin, request, queryset):
 @admin.action(description="[2] Run Committee Import (requires cm.txt)")
 def run_committee_import(modeladmin, request, queryset):
     try:
-        call_command('import_committees', 'cm.txt')
+        call_command('import_committees', 'data/cm.txt')
         modeladmin.message_user(request, "Successfully ran Committee import!", messages.SUCCESS)
     except Exception as e:
         modeladmin.message_user(request, f"Import failed: {e}", messages.ERROR)
@@ -55,7 +55,7 @@ def run_clear_contributions(modeladmin, request, queryset):
 @admin.action(description="[2] Run Contribution Import (requires itcont.txt)")
 def run_contribution_import(modeladmin, request, queryset):
     try:
-        call_command('import_contributions', 'itcont.txt')
+        call_command('import_contributions', 'data/itcont.txt')
         modeladmin.message_user(request, "Successfully ran Contribution import!", messages.SUCCESS)
     except Exception as e:
         modeladmin.message_user(request, f"Import failed: {e}", messages.ERROR)
