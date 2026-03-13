@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color //added -d
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.text.style.TextAlign
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -88,60 +89,65 @@ fun CandidateDetailScreen(
                 ) {
 
 
-                    //name of the candidate with a badge next to it with party and state
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center,
+                    //name of the candidate with state and party badges underneath
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
                             text = candidateVal.name,
-                            style = MaterialTheme.typography.headlineLarge
+                            style = MaterialTheme.typography.headlineLarge,
+                            textAlign = TextAlign.Center
                         )
 
-                        Spacer(modifier = Modifier.width(12.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
 
                         //party badge
-                        Surface(
-                            color = partyColor(candidateVal.party),
-                            shape = CircleShape
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
                         ) {
-                            Text(
-                                text = candidateVal.party ?: "N/A",
-                                color = Color.White,
-                                style = MaterialTheme.typography.labelLarge,
-                                modifier = Modifier.padding(
-                                    horizontal = 14.dp,
-                                    vertical = 6.dp
+                            Surface(
+                                color = partyColor(candidateVal.party),
+                                shape = CircleShape
+                            ) {
+                                Text(
+                                    text = candidateVal.party ?: "N/A",
+                                    color = Color.White,
+                                    style = MaterialTheme.typography.labelLarge,
+                                    modifier = Modifier.padding(
+                                        horizontal = 14.dp,
+                                        vertical = 6.dp
+                                    )
+
+
                                 )
+                            }
+
+                            Spacer(modifier = Modifier.width(8.dp))
+
+                            //state badge
+                            Surface(
+                                color = Color(0xFF1C1C1C),
+                                shape = CircleShape
+                            ) {
+                                Text(
+                                    text = candidateVal.state ?: "N/A",
+                                    color = Color.White,
+                                    style = MaterialTheme.typography.labelLarge,
+                                    modifier = Modifier.padding(
+                                        horizontal = 14.dp,
+                                        vertical = 6.dp
+                                    )
 
 
-                            )
+                                )
+                            }
                         }
 
-                        Spacer(modifier = Modifier.width(6.dp))
-
-                        //state badge
-                        Surface(
-                            color = Color(0xFF1C1C1C),
-                            shape = CircleShape
-                        ) {
-                            Text(
-                                text = candidateVal.state ?: "N/A",
-                                color = Color.White,
-                                style = MaterialTheme.typography.labelLarge,
-                                modifier = Modifier.padding(
-                                    horizontal = 14.dp,
-                                    vertical = 6.dp
-                                )
-
-
-                            )
-                        }
                     }
 
                 }
-
 
                 //about section with candidate info, election cycle, primary office
                 Card(
