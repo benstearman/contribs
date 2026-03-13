@@ -18,6 +18,9 @@ interface ContribsApiService {
     @GET("candidates/{id}/")
     suspend fun getCandidateDetail(@Path("id") id: String): Candidate
 
+    @GET("candidates/{id}/committees/")
+    suspend fun getCandidateCommittees(@Path("id") id: String): List<Committee>
+
     @GET("committees/")
     suspend fun getCommittees(@Query("page") page: Int = 1): PaginatedResponse<Committee>
 

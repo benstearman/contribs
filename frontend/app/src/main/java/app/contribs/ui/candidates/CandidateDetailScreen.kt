@@ -29,9 +29,11 @@ fun CandidateDetailScreen(
 ) {
     // Fetch the specific candidate from the dummy data
     val candidate by viewModel.selectedCandidate.collectAsState()
+    val committees by viewModel.candidateCommittees.collectAsState()
 
     LaunchedEffect(candidateId) {
         viewModel.fetchCandidateDetail(candidateId)
+        viewModel.fetchCommitteesForCandidate(candidateId)
     }
 
     Scaffold(
@@ -141,92 +143,115 @@ fun CandidateDetailScreen(
                 }
 
 
-            //about section with candidate info, election cycle, primary office
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-            )
-            {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "About",
-                        style = MaterialTheme.typography.titleMedium
-                    )
+                //about section with candidate info, election cycle, primary office
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                )
+                {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "About",
+                            style = MaterialTheme.typography.titleMedium
+                        )
 
-                    HorizontalDivider()
+                        HorizontalDivider()
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                        Spacer(modifier = Modifier.height(10.dp))
 
-                    Text("Office: ${candidateVal.office ?: "N/A"}")
-                    Text("Election Cycle(s): ${candidateVal.electionYear ?: "N/A"}")
-                }
-
-
-            }
-
-            //summary of total money raised current cycle, leading donor/contributor this cycle
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-
-                    Text(
-                        text = "Financial Summary",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-
-                    HorizontalDivider()
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    // ttal money received
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("Total Received This Cycle")
-                        Text("$${candidateVal.totalContributions ?: 0.00}")
+                        Text("Office: ${candidateVal.office ?: "N/A"}")
+                        Text("Election Cycle(s): ${candidateVal.electionYear ?: "N/A"}")
                     }
 
-                    Spacer(modifier = Modifier.height(8.dp))
 
-                    // the leading donor or contributor to candidate
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("Leading Donor")
+                }
+
+                //summary of total money raised current cycle, leading donor/contributor this cycle
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+
+                        Text(
+                            text = "Financial Summary",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+
+                        HorizontalDivider()
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        // ttal money received
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Total Received This Cycle")
+                            Text("$${candidateVal.totalContributions ?: 0.00}")
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // the leading donor or contributor to candidate
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text("Leading Donor")
+                            Text("coming soon...")
+                        }
+                    }
+                }
+
+                //top contributors / donors to candidate for current campaign
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                )
+                {
+                    Column(modifier = Modifier.padding(10.dp)) {
+                        Text(
+                            text = "Candidate's Top Contributors",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+
+                        HorizontalDivider()
+
+                        Spacer(modifier = Modifier.height(10.dp))
+
                         Text("coming soon...")
+
+                    }
+
+
+                }
+
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Committees",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        HorizontalDivider()
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        if (committees.isNotEmpty()) {
+                            for (committee in committees) {
+                                Text(committee.name ?: "Unnamed Committee")
+                            }
+                        } else {
+                            Text("No committees found.")
+                        }
                     }
                 }
-            }
-
-            //top contributors / donors to candidate for current campaign
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-            )
-            {
-                Column(modifier = Modifier.padding(10.dp)) {
-                    Text(
-                        text = "Candidate's Top Contributors",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-
-                    HorizontalDivider()
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    Text("coming soon...")
-
-                }
-
-
-            }
             } else {
                 Text("Candidate not found.")
             }

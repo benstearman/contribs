@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.contribs.data.api.RetrofitClient
 import app.contribs.data.model.Candidate
+import app.contribs.data.model.Committee
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -20,6 +21,10 @@ class CandidateViewModel : ViewModel() {
 
     private val _selectedCandidate = MutableStateFlow<Candidate?>(null)
     val selectedCandidate: StateFlow<Candidate?> = _selectedCandidate
+
+    private val _candidateCommittees = MutableStateFlow<List<Committee>>(emptyList())
+    val candidateCommittees: StateFlow<List<Committee>> = _candidateCommittees
+
     init {
         fetchCandidates()
         loadNextPage() // Fetch the first page when the screen opens
@@ -70,6 +75,17 @@ class CandidateViewModel : ViewModel() {
             try {
                 val candidate = RetrofitClient.instance.getCandidateDetail(id)
                 _selectedCandidate.value = candidate
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun fetchCommitteesForCandidate(candidateId: String) {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.instance.getCandidateCommittees(candidateId)
+                _candidateCommittees.value = response
             } catch (e: Exception) {
                 e.printStackTrace()
             }

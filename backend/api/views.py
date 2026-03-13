@@ -1,4 +1,6 @@
 from rest_framework import viewsets, permissions
+from rest_framework.decorators import action
+from rest_framework.response import Response
 from django.db.models import Sum
 from .models import Contributor, Contribution, Candidate, Committee, Party
 from .serializers import (
@@ -22,6 +24,13 @@ class CandidateViewSet(viewsets.ModelViewSet):
     serializer_class = CandidateSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
+    @action(detail=True, methods=['get'])
+    def committees(self, request, pk=None):
+        candidate = self.get_object() # Finds the specific candidate
+        committees = candidate.committees.all() # Grabs their committees
+        serializer = CommitteeSerializer(committees, many=True)
+        return Response(serializer.data)
+    
 class CommitteeViewSet(viewsets.ModelViewSet):
     """View and edit committee details."""
     # select_related avoids extra queries for the supported candidate
