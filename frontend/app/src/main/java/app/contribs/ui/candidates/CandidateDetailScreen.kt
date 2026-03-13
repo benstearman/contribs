@@ -270,6 +270,7 @@ private fun partyColor(party: String?): Color {
     return when (party) {
         "DEM" -> Color(0xFF1141B9)
         "REP" -> Color(0xFFAF0E0E)
-        else -> Color(0xFF9F9E9E)
+        "GRE", "IGR", "DGR", "DCG", "PG" -> Color(0xFF5BAF47) //"green" parties
+        else -> Color(0xFFD3D3D3)
     }
 }
