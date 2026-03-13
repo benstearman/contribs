@@ -12,12 +12,17 @@ class Command(BaseCommand):
         file_path = kwargs['csv_file']
         abs_path = os.path.abspath(file_path)
 
-        # 1. CREATE A RAW STAGING TABLE
-        self.stdout.write("1. Creating raw PostgreSQL staging table...")
         with connection.cursor() as cursor:
+            # --- 🚀 THE TURBOCHARGER 🚀 ---
+            # Temporarily give Postgres 1GB of RAM to do massive Hash Joins and Index building purely in memory
+            self.stdout.write("Unlocking PostgreSQL memory limits...")
+            cursor.execute("SET work_mem = '1GB';")
+            cursor.execute("SET maintenance_work_mem = '1GB';")
+
+            # 1. CREATE A RAW STAGING TABLE
+            self.stdout.write("1. Creating raw PostgreSQL staging table...")
             cursor.execute('''
                 DROP TABLE IF EXISTS temp_fec_import;
-                -- UNLOGGED tables are insanely fast because they don't write to crash-recovery logs
                 CREATE UNLOGGED TABLE temp_fec_import (
                     CMTE_ID text, AMNDT_IND text, RPT_TP text, TRANSACTION_PGI text, 
                     IMAGE_NUM text, TRANSACTION_TP text, ENTITY_TP text, NAME text, 
@@ -28,10 +33,9 @@ class Command(BaseCommand):
                 );
             ''')
 
-            # 2. STREAM THE FILE DIRECTLY TO POSTGRESQL (Bypassing Python)
+            # 2. STREAM THE FILE DIRECTLY TO POSTGRESQL
             self.stdout.write("2. Streaming 12.7M rows directly into PostgreSQL engine (Takes ~1-2 mins)...")
             with open(abs_path, 'r', encoding='utf-8', errors='replace') as f:
-                # Using a Python f-string to inject the literal ASCII 31 unit separator character
                 sql = f"""
                 COPY temp_fec_import FROM STDIN WITH (
                     FORMAT csv, 
@@ -42,7 +46,7 @@ class Command(BaseCommand):
                 """
                 cursor.copy_expert(sql, f)
 
-            # 3. EXTRACT AND SAVE EMPLOYERS (Database-native speed)
+            # 3. EXTRACT AND SAVE EMPLOYERS
             self.stdout.write("3. Extracting and saving unique Employers...")
             cursor.execute('''
                 INSERT INTO api_employer (name)
@@ -51,7 +55,7 @@ class Command(BaseCommand):
                 ON CONFLICT (name) DO NOTHING;
             ''')
 
-            # 4. EXTRACT AND SAVE CONTRIBUTORS (Database-native speed)
+            # 4. EXTRACT AND SAVE CONTRIBUTORS
             self.stdout.write("4. Extracting and saving unique Contributors...")
             cursor.execute('''
                 INSERT INTO api_contributor (full_name, zip_code, employer_id)
@@ -66,29 +70,41 @@ class Command(BaseCommand):
             ''')
 
             # 5. LINK EVERYTHING TOGETHER AND SAVE CONTRIBUTIONS
-            self.stdout.write("5. Linking 12.7M Contributions to Committees and Contributors...")
+            self.stdout.write("5. Linking 12.7M Contributions (Using high-memory Hash Joins)...")
+            
+            # Using a CTE (WITH clause) computes the string cleanup FIRST,
+            # so Postgres doesn't have to recalculate strings 12.7 million times during the JOIN
             cursor.execute('''
+                WITH cleaned_import AS (
+                    SELECT 
+                        SUB_ID,
+                        CAST(NULLIF(trim(TRANSACTION_AMT), '') AS NUMERIC) as amount,
+                        TO_DATE(NULLIF(trim(TRANSACTION_DT), ''), 'MMDDYYYY') as receipt_date,
+                        CMTE_ID,
+                        COALESCE(trim(NAME), 'UNKNOWN') as clean_name,
+                        COALESCE(SUBSTRING(trim(ZIP_CODE) FROM 1 FOR 9), '') as clean_zip
+                    FROM temp_fec_import
+                    WHERE LENGTH(trim(TRANSACTION_DT)) = 8
+                )
                 INSERT INTO api_contribution (fec_sub_id, amount, receipt_date, committee_id, contributor_id)
                 SELECT 
                     t.SUB_ID,
-                    CAST(NULLIF(trim(t.TRANSACTION_AMT), '') AS NUMERIC),
-                    TO_DATE(NULLIF(trim(t.TRANSACTION_DT), ''), 'MMDDYYYY'),
+                    t.amount,
+                    t.receipt_date,
                     t.CMTE_ID,
                     c.id
-                FROM temp_fec_import t
-                -- Only attach to valid Committees in our DB
+                FROM cleaned_import t
                 JOIN api_committee com ON com."CMTE_ID" = t.CMTE_ID
-                -- Match back to the Contributor we just created
-                JOIN api_contributor c ON 
-                    c.full_name = COALESCE(trim(t.NAME), 'UNKNOWN') AND 
-                    c.zip_code = COALESCE(SUBSTRING(trim(t.ZIP_CODE) FROM 1 FOR 9), '')
-                -- Filter out corrupted FEC dates using regex
-                WHERE t.TRANSACTION_DT ~ '^[0-9]{8}$' 
+                JOIN api_contributor c ON c.full_name = t.clean_name AND c.zip_code = t.clean_zip
                 ON CONFLICT (fec_sub_id) DO NOTHING;
             ''')
 
             # 6. CLEANUP
             self.stdout.write("6. Cleaning up staging table...")
             cursor.execute('DROP TABLE temp_fec_import;')
+            
+            # Reset memory limits to standard defaults
+            cursor.execute("SET work_mem = '4MB';")
+            cursor.execute("SET maintenance_work_mem = '64MB';")
 
         self.stdout.write(self.style.SUCCESS('Successfully processed 12.7 Million Contributions at database speed!'))
