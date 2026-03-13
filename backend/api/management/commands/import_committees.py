@@ -13,7 +13,6 @@ class Command(BaseCommand):
         self.stdout.write(f"Reading from {csv_file_path}...")
 
         with open(csv_file_path, newline='', encoding='utf-8', errors='replace') as file:
-            # Official FEC headers for Committee Master
             fec_headers = [
                 'CMTE_ID', 'CMTE_NM', 'TRES_NM', 'CMTE_ST1', 'CMTE_ST2', 'CMTE_CITY', 
                 'CMTE_ST', 'CMTE_ZIP', 'CMTE_DSGN', 'CMTE_TP', 'CMTE_PTY_AFFILIATION', 
@@ -22,12 +21,16 @@ class Command(BaseCommand):
             
             reader = csv.DictReader(file, fieldnames=fec_headers, delimiter='|') 
             processed_count = 0
+            linked_count = 0
             
             for row in reader:
                 cand_id_str = row.get('CAND_ID', '').strip()
-                candidate_obj = None
-                if cand_id_str:
-                    candidate_obj = Candidate.objects.filter(CAND_ID=cand_id_str).first()
+                linked_cand_id = None
+                
+                # Verify the candidate was already imported before linking
+                if cand_id_str and Candidate.objects.filter(CAND_ID=cand_id_str).exists():
+                    linked_cand_id = cand_id_str
+                    linked_count += 1
 
                 Committee.objects.update_or_create(
                     CMTE_ID=row['CMTE_ID'].strip(),
@@ -37,12 +40,13 @@ class Command(BaseCommand):
                         'CMTE_ST': row.get('CMTE_ST', '').strip()[:2] or None,
                         'CMTE_TP': row.get('CMTE_TP', '').strip()[:1] or None,
                         'CMTE_DSGN': row.get('CMTE_DSGN', '').strip()[:1] or None,
-                        'CAND_ID': candidate_obj
+                        # Use the exact underlying database column name Django generates
+                        'CAND_ID_id': linked_cand_id 
                     }
                 )
                 
                 processed_count += 1
                 if processed_count % 1000 == 0:
-                    self.stdout.write(f"Processed {processed_count} committees...")
+                    self.stdout.write(f"Processed {processed_count} committees... ({linked_count} linked to candidates)")
 
-        self.stdout.write(self.style.SUCCESS(f'Successfully processed {processed_count} Committees!'))
+        self.stdout.write(self.style.SUCCESS(f'Successfully processed {processed_count} Committees! {linked_count} successfully linked to Candidates.'))
