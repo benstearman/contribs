@@ -1,82 +1,78 @@
 import csv
-from datetime import datetime
 from django.core.management.base import BaseCommand
-from api.models import Contribution, Contributor, Employer, Committee
+from api.models import Candidate, Party
 
 class Command(BaseCommand):
-    help = 'Imports Contributions from the FEC Individual Contributions file (itcont.txt)'
+    help = 'Blazing fast Candidate import using bulk_create and in-memory caching'
 
     def add_arguments(self, parser):
-        parser.add_argument('csv_file', type=str, help='Path to the itcont.txt file')
+        parser.add_argument('csv_file', type=str, help='Path to the cn.txt file')
 
     def handle(self, *args, **kwargs):
         csv_file_path = kwargs['csv_file']
         self.stdout.write(f"Reading from {csv_file_path}...")
 
+        # 1. IN-MEMORY CACHING: Pre-load all parties so we NEVER query the DB for them in the loop
+        party_cache = {party.id: party for party in Party.objects.all()}
+        
+        # 2. BATCH SETUP: We will save 5,000 candidates at a time
+        batch_size = 5000
+        candidates_batch = []
+        processed_count = 0
+
         with open(csv_file_path, newline='', encoding='utf-8', errors='replace') as file:
-            # Official FEC headers for Individual Contributions
             fec_headers = [
-                'CMTE_ID', 'AMNDT_IND', 'RPT_TP', 'TRANSACTION_PGI', 'IMAGE_NUM', 
-                'TRANSACTION_TP', 'ENTITY_TP', 'NAME', 'CITY', 'STATE', 'ZIP_CODE', 
-                'EMPLOYER', 'OCCUPATION', 'TRANSACTION_DT', 'TRANSACTION_AMT', 
-                'OTHER_ID', 'TRAN_ID', 'FILE_NUM', 'MEMO_CD', 'MEMO_TEXT', 'SUB_ID'
+                'CAND_ID', 'CAND_NAME', 'CAND_PTY_AFFILIATION', 'CAND_ELECTION_YR', 
+                'CAND_OFFICE_ST', 'CAND_OFFICE', 'CAND_OFFICE_DISTRICT', 'ICI_CODE', 
+                'CAND_STATUS', 'CAND_PCC', 'CAND_ST1', 'CAND_ST2', 'CAND_CITY', 
+                'CAND_ST', 'CAND_ZIP'
             ]
             
             reader = csv.DictReader(file, fieldnames=fec_headers, delimiter='|') 
-            processed_count = 0
             
             for row in reader:
-                cmte_id_str = row.get('CMTE_ID', '').strip()
-                committee_obj = Committee.objects.filter(CMTE_ID=cmte_id_str).first()
-                if not committee_obj:
-                    continue
-                    
-                emp_name = row.get('EMPLOYER', '').strip()
-                employer_obj = None
-                if emp_name:
-                    employer_obj, _ = Employer.objects.get_or_create(name=emp_name)
-
-                full_name = row.get('NAME', '').strip() or "UNKNOWN"
-                zip_code = row.get('ZIP_CODE', '').strip()[:9] 
+                # --- FAST PARTY LOOKUP ---
+                party_code = row.get('CAND_PTY_AFFILIATION', '').strip()[:3]
+                party_obj = None
                 
-                contributor_obj, _ = Contributor.objects.get_or_create(
-                    full_name=full_name,
-                    zip_code=zip_code,
-                    defaults={'employer': employer_obj}
+                if party_code:
+                    if party_code not in party_cache:
+                        # Only hit the DB if it's a brand new party we've never seen
+                        new_party = Party.objects.create(id=party_code, name=party_code)
+                        party_cache[party_code] = new_party
+                    party_obj = party_cache[party_code]
+
+                # --- ASSEMBLE CANDIDATE (In RAM, no DB hit) ---
+                candidate = Candidate(
+                    CAND_ID=row['CAND_ID'].strip(),
+                    CAND_NAME=row.get('CAND_NAME', '').strip(),
+                    CAND_PTY_AFFILIATION=party_obj,
+                    CAND_ELECTION_YR=int(row['CAND_ELECTION_YR']) if row.get('CAND_ELECTION_YR') else None,
+                    CAND_OFFICE_ST=row.get('CAND_OFFICE_ST', '').strip()[:2] or None,
+                    CAND_OFFICE=row.get('CAND_OFFICE', '').strip()[:1] or None,
+                    CAND_OFFICE_DISTRICT=row.get('CAND_OFFICE_DISTRICT', '').strip()[:2] or None
                 )
-
-                raw_date = row.get('TRANSACTION_DT', '').strip()
-                receipt_date = None
-                if raw_date:
-                    try:
-                        receipt_date = datetime.strptime(raw_date, '%m%d%Y').date()
-                    except ValueError:
-                        pass
-                        
-                if not receipt_date:
-                    continue 
-
-                try:
-                    amount = float(row.get('TRANSACTION_AMT', '').strip())
-                except ValueError:
-                    amount = 0.00
-                    
-                fec_sub_id = row.get('SUB_ID', '').strip()
-                if not fec_sub_id:
-                    continue
-
-                Contribution.objects.update_or_create(
-                    fec_sub_id=fec_sub_id,
-                    defaults={
-                        'contributor': contributor_obj,
-                        'committee': committee_obj,
-                        'amount': amount,
-                        'receipt_date': receipt_date
-                    }
-                )
-                
+                candidates_batch.append(candidate)
                 processed_count += 1
-                if processed_count % 1000 == 0:
-                    self.stdout.write(f"Processed {processed_count} contributions...")
 
-        self.stdout.write(self.style.SUCCESS(f'Successfully processed {processed_count} Contributions!'))
+                # --- FIRE THE BATCH PAYLOAD ---
+                if len(candidates_batch) >= batch_size:
+                    Candidate.objects.bulk_create(
+                        candidates_batch,
+                        update_conflicts=True, # Tells Postgres to safely update if ID exists
+                        unique_fields=['CAND_ID'],
+                        update_fields=['CAND_NAME', 'CAND_PTY_AFFILIATION', 'CAND_ELECTION_YR', 'CAND_OFFICE_ST', 'CAND_OFFICE', 'CAND_OFFICE_DISTRICT']
+                    )
+                    self.stdout.write(f"Processed {processed_count} candidates...")
+                    candidates_batch = [] # Empty the list to start the next batch
+
+            # --- CLEANUP: Save any leftover candidates in the final partial batch ---
+            if candidates_batch:
+                Candidate.objects.bulk_create(
+                    candidates_batch,
+                    update_conflicts=True,
+                    unique_fields=['CAND_ID'],
+                    update_fields=['CAND_NAME', 'CAND_PTY_AFFILIATION', 'CAND_ELECTION_YR', 'CAND_OFFICE_ST', 'CAND_OFFICE', 'CAND_OFFICE_DISTRICT']
+                )
+
+        self.stdout.write(self.style.SUCCESS(f'Successfully processed {processed_count} Candidates at lightspeed!'))
