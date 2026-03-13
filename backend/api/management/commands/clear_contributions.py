@@ -1,19 +1,14 @@
 from django.core.management.base import BaseCommand
-from api.models import Contribution, Contributor, Employer
+from django.db import connection
 
 class Command(BaseCommand):
-    help = 'Clears all Contributions, Contributors, and Employers'
+    help = 'Instantly clears all Contributions, Contributors, and Employers'
 
     def handle(self, *args, **kwargs):
-        self.stdout.write("Deleting Contributions...")
-        cont_count, _ = Contribution.objects.all().delete()
+        self.stdout.write("Instantly truncating Contributions, Contributors, and Employers...")
         
-        self.stdout.write("Deleting Contributors...")
-        contrib_count, _ = Contributor.objects.all().delete()
-        
-        self.stdout.write("Deleting Employers...")
-        emp_count, _ = Employer.objects.all().delete()
-        
-        self.stdout.write(self.style.SUCCESS(
-            f'Successfully deleted {cont_count} contributions, {contrib_count} contributors, and {emp_count} employers.'
-        ))
+        with connection.cursor() as cursor:
+            # You can string multiple tables together in one TRUNCATE command
+            cursor.execute('TRUNCATE TABLE api_contribution, api_contributor, api_employer CASCADE;')
+            
+        self.stdout.write(self.style.SUCCESS('Successfully cleared Contributions data!'))

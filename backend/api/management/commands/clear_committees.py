@@ -1,11 +1,15 @@
 from django.core.management.base import BaseCommand
-from api.models import Committee
+from django.db import connection
 
 class Command(BaseCommand):
-    help = 'Clears all Committee data from the database'
+    help = 'Instantly clears all Committee data from the database'
 
     def handle(self, *args, **kwargs):
-        self.stdout.write("Deleting Committees (this will also cascade delete related Contributions)...")
-        committee_count, _ = Committee.objects.all().delete()
+        self.stdout.write("Instantly truncating Committees (and cascading to Contributions)...")
         
-        self.stdout.write(self.style.SUCCESS(f'Successfully deleted {committee_count} committees.'))
+        with connection.cursor() as cursor:
+            # TRUNCATE instantly empties the table. 
+            # CASCADE tells Postgres to instantly wipe the linked Contributions too.
+            cursor.execute('TRUNCATE TABLE api_committee CASCADE;')
+            
+        self.stdout.write(self.style.SUCCESS('Successfully cleared Committees!'))
