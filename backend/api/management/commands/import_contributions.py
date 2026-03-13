@@ -31,12 +31,12 @@ class Command(BaseCommand):
             # 2. STREAM THE FILE DIRECTLY TO POSTGRESQL (Bypassing Python)
             self.stdout.write("2. Streaming 12.7M rows directly into PostgreSQL engine (Takes ~1-2 mins)...")
             with open(abs_path, 'r', encoding='utf-8', errors='replace') as f:
-                # copy_expert streams the raw text file directly to the database
-                sql = """
+                # Using a Python f-string to inject the literal ASCII 31 unit separator character
+                sql = f"""
                 COPY temp_fec_import FROM STDIN WITH (
                     FORMAT csv, 
                     DELIMITER '|', 
-                    QUOTE chr(31), -- Ignore standard quotes so names like O'Reilly don't break
+                    QUOTE '{chr(31)}', 
                     NULL ''
                 )
                 """
