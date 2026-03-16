@@ -1,4 +1,5 @@
 package app.contribs.ui.candidates
+import app.contribs.R
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -19,6 +20,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.text.style.TextAlign
+import coil.compose.AsyncImage
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -73,12 +77,17 @@ fun CandidateDetailScreen(
                         .padding(vertical = 32.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Box(
+                    AsyncImage(
+                        model = candidateVal.photoURL,
+                        contentDescription = "Portrait of ${candidateVal.name}",
+                        fallback = painterResource(R.drawable.default_portrait),
                         modifier = Modifier
-                            .size(140.dp)
+                            .size(120.dp)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.secondaryContainer)
+                            .background(Color.White),
+                        contentScale = ContentScale.Crop
                     )
+
                 }
 
                 Column(

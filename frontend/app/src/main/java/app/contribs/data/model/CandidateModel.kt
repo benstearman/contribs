@@ -9,5 +9,6 @@ data class Candidate(
     @SerializedName("CAND_ELECTION_YR") val electionYear: Int?,
     @SerializedName("CAND_OFFICE_ST") val state: String?,
     @SerializedName("office_display") val office: String?,
-    @SerializedName("total_contributions") val totalContributions: Double?
+    @SerializedName("total_contributions") val totalContributions: Double?,
+    @SerializedName("photo_url") val photoURL: String? = null
 )
