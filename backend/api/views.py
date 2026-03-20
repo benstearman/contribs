@@ -24,6 +24,9 @@ class CandidateViewSet(viewsets.ModelViewSet):
     serializer_class = CandidateSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['CAND_NAME']
+
     @action(detail=True, methods=['get'])
     def committees(self, request, pk=None):
         candidate = self.get_object() # Finds the specific candidate
