@@ -13,7 +13,10 @@ import retrofit2.http.Query
 // 1. Define the endpoints that match your Django urls.py
 interface ContribsApiService {
     @GET("candidates/")
-    suspend fun getCandidates(@Query("page") page: Int = 1): PaginatedResponse<Candidate>
+    suspend fun getCandidates(
+        @Query("page") page: Int = 1,
+        @Query("search") search: String? = null
+    ): PaginatedResponse<Candidate>
 
     @GET("candidates/{id}/")
     suspend fun getCandidateDetail(@Path("id") id: String): Candidate
