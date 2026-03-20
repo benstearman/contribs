@@ -1,4 +1,4 @@
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets, permissions, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db.models import Sum
@@ -23,6 +23,9 @@ class CandidateViewSet(viewsets.ModelViewSet):
     queryset = Candidate.objects.select_related('CAND_PTY_AFFILIATION').all().order_by("CAND_NAME")
     serializer_class = CandidateSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['CAND_NAME']
 
     @action(detail=True, methods=['get'])
     def committees(self, request, pk=None):
