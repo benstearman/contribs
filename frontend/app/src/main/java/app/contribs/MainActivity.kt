@@ -17,6 +17,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import app.contribs.data.model.ElectionSummary
 
 // Feature Screen Imports
 import app.contribs.ui.candidates.CandidateDetailScreen
@@ -24,6 +25,7 @@ import app.contribs.ui.candidates.CandidateListScreen
 import app.contribs.ui.candidates.CandidateViewModel
 import app.contribs.ui.committees.CommitteeListScreen
 import app.contribs.ui.contributions.ContributionListScreen
+import app.contribs.ui.elections.ElectionScreen
 import app.contribs.ui.profile.ProfileScreen
 
 // Navigation & Theme Imports
@@ -51,9 +53,12 @@ fun ContribsApp() {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = ContribsScreen.Candidates.route,
+            startDestination = ContribsScreen.Elections.route,
             modifier = Modifier.padding(innerPadding)
         ) {
+            composable(ContribsScreen.Elections.route) {
+                ElectionScreen()
+            }
             // --- Candidates Flow ---
             composable(ContribsScreen.Candidates.route) {
                 // Scoped ViewModel so the list and detail screen share the same data
@@ -79,9 +84,7 @@ fun ContribsApp() {
             }
 
             // --- Other Tabs ---
-            composable(ContribsScreen.Committees.route) {
-                CommitteeListScreen()
-            }
+
             composable(ContribsScreen.Contributions.route) {
                 ContributionListScreen()
             }
