@@ -87,6 +87,7 @@ class ContributionSerializer(serializers.ModelSerializer):
     # Use nested serializers for more detailed GET responses
     contributor_detail = ContributorSerializer(source="contributor", read_only=True)
     committee_detail = CommitteeSerializer(source="committee", read_only=True)
+    receipt_date = serializers.DateField()
 
     class Meta:
         model = Contribution
