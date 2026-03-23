@@ -66,7 +66,7 @@ fun CandidateListScreen(
                     }
 
                     ListItem(
-                        headlineContent = { Text(candidate.name) },
+                        headlineContent = { Text(candidate.formattedName) },
                         supportingContent = { Text("${candidate.party ?: "Unknown"} - ${candidate.state ?: "N/A"} ${candidate.office ?: ""}") },
                         leadingContent = { Icon(Icons.Default.Person, contentDescription = null) },
                         modifier = Modifier.clickable { onCandidateClick(candidate.id) }

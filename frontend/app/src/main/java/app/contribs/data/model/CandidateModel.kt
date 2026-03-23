@@ -12,3 +12,22 @@ data class Candidate(
     @SerializedName("total_contributions") val totalContributions: Double?,
     @SerializedName("photo_url") val photoURL: String? = null
 )
+
+{
+
+    //use this where you want the candidate name to be first THEN last
+    val formattedName: String
+        get() {
+            if (!name.contains(",")) return name
+
+            val parts = name.split(",")
+            val lastName = parts[0].trim()
+            val firstName = parts[1].trim()
+
+            val fullName = "$firstName $lastName".lowercase()
+
+            return fullName.split(" ").joinToString(" ") { word ->
+                word.replaceFirstChar { it.uppercase() }
+            }
+        }
+}
