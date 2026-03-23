@@ -1,29 +1,36 @@
 package app.contribs.ui.candidates
+
 import app.contribs.R
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.IconButton
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.background //added -d
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.ui.Alignment //added -d
-import androidx.compose.ui.draw.clip //added -d
-import androidx.compose.ui.graphics.Color //added -d
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.text.style.TextAlign
 import coil.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-
+import androidx.compose.ui.text.font.FontWeight
+import app.contribs.data.model.getFullCommitteeType
+import androidx.compose.material.icons.filled.AccountBalance
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,7 +39,12 @@ fun CandidateDetailScreen(
     viewModel: CandidateViewModel,
     onNavigateBack: () -> Unit
 ) {
-    // Fetch the specific candidate from the dummy data
+    //committee dialog box details
+    var showDialog by remember { mutableStateOf(false) }
+    var selectedCommitteeName by remember { mutableStateOf("") }
+    var selectedCommitteeTres by remember { mutableStateOf("") }
+    var selectedCommitteeType by remember { mutableStateOf("") }
+
     val candidate by viewModel.selectedCandidate.collectAsState()
     val committees by viewModel.candidateCommittees.collectAsState()
 
@@ -69,7 +81,7 @@ fun CandidateDetailScreen(
                 val bgColor = partyColor(candidateVal.party)
 
 
-                //below is a photo placeholder, circle shaped and centered for portrait photo of candidate
+                //below is candidate portrait if there is one if not then a silly default photo
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -104,7 +116,7 @@ fun CandidateDetailScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            text = candidateVal.name,
+                            text = candidateVal.formattedName,
                             style = MaterialTheme.typography.headlineLarge,
                             textAlign = TextAlign.Center
                         )
@@ -199,7 +211,7 @@ fun CandidateDetailScreen(
 
                         Spacer(modifier = Modifier.height(10.dp))
 
-                        // ttal money received
+                        // total money received
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
@@ -258,9 +270,35 @@ fun CandidateDetailScreen(
                         HorizontalDivider()
                         Spacer(modifier = Modifier.height(10.dp))
 
+                        //starting here is the arrow/ability to click on the committee name for a box to pop up
                         if (committees.isNotEmpty()) {
                             for (committee in committees) {
-                                Text(committee.name ?: "Unnamed Committee")
+
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            selectedCommitteeName =
+                                                committee.name ?: "Unnamed Committee"
+                                            selectedCommitteeType = committee.type ?: "Unknown"
+                                            selectedCommitteeTres = committee.treasurer ?: "Unknown"
+
+                                            showDialog = true
+                                        }
+                                        .padding(vertical = 12.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        committee.name ?: "Unnamed Committee"
+                                    )
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                                        contentDescription = null,
+                                        tint = Color.Gray
+                                    )
+                                }
+                                HorizontalDivider(thickness = 0.5.dp, color = Color.LightGray)
                             }
                         } else {
                             Text("No committees found.")
@@ -270,6 +308,74 @@ fun CandidateDetailScreen(
             } else {
                 Text("Candidate not found.")
             }
+        }
+        //the dialog box and information it shows starts here
+        if (showDialog) {
+            AlertDialog(
+                onDismissRequest = { showDialog = false },
+
+                icon = {
+                    Icon(
+                        imageVector = Icons.Default.AccountBalance,
+                        contentDescription = "Institution",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                },
+
+                title = {
+                    Text(
+                        text = selectedCommitteeName,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+                },
+
+                text = {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+
+
+                        Text(
+                            "COMMITTEE TYPE:",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color.Gray
+                        )
+                        Text(
+                            text = getFullCommitteeType(selectedCommitteeType),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(
+                            "TREASURER:",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color.Gray
+                        )
+                        Text(
+                            text = selectedCommitteeTres,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text( //we can implement this later... just a placeholder/idea
+                            "TOTAL MONEY RAISED:",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color.Gray
+                        )
+                        Text(
+                            text = "coming soon...",
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showDialog = false }) {
+                        Text("Close")
+                    }
+                }
+            )
         }
     }
 }
