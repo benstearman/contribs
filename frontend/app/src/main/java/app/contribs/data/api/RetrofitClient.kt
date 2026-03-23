@@ -37,7 +37,7 @@ interface ContribsApiService {
     @GET("contributions/{id}/")
     suspend fun getContributionDetail(@Path("id") id: String): Contribution
 
-    @GET("api/elections/summary/")
+    @GET("elections/summary/")
     suspend fun getElectionSummary(): ElectionSummary
 }
 
