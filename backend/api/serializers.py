@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Party, Candidate, Committee, Employer, Contributor, Contribution
 
+import datetime
 import json
 import os
 from django.conf import settings
@@ -24,6 +25,16 @@ def load_legislator_data():
         return {}
 
 FEC_TO_BIOGUIDE = load_legislator_data()
+
+class SmartDateField(serializers.DateField):
+    """
+    Custom DateField that safely handles datetime objects by converting 
+    them to dates before representation.
+    """
+    def to_representation(self, value):
+        if isinstance(value, datetime.datetime):
+            value = value.date()
+        return super().to_representation(value)
 
 class PartySerializer(serializers.ModelSerializer):
     """Returns basic party info (e.g., Republican, Democratic)."""
@@ -87,7 +98,7 @@ class ContributionSerializer(serializers.ModelSerializer):
     # Use nested serializers for more detailed GET responses
     contributor_detail = ContributorSerializer(source="contributor", read_only=True)
     committee_detail = CommitteeSerializer(source="committee", read_only=True)
-    receipt_date = serializers.DateField()
+    receipt_date = SmartDateField()
 
     class Meta:
         model = Contribution
