@@ -57,3 +57,23 @@ class ContributorViewSet(viewsets.ModelViewSet):
     queryset = Contributor.objects.select_related('employer').all().order_by("full_name")
     serializer_class = ContributorSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+class ElectionSummaryView(APIView):
+    """Calculates top contributors and employers across the entire database."""
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get(self, request):
+        # Top 10 Employers by total donation amount
+        top_employers = Employer.objects.annotate(
+            total_amount=Sum('contributor__contributions__amount')
+        ).exclude(name='').exclude(total_amount__isnull=True).order_by('-total_amount')[:10]
+        
+        # Top 10 Individual Contributors by total donation amount
+        top_contributors = Contributor.objects.annotate(
+            total_amount=Sum('contributions__amount')
+        ).exclude(full_name='UNKNOWN').exclude(total_amount__isnull=True).order_by('-total_amount')[:10]
+        
+        return Response({
+            "top_employers": [{"name": e.name, "total": e.total_amount} for e in top_employers],
+            "top_contributors": [{"name": c.full_name, "total": c.total_amount} for c in top_contributors]
+        })
