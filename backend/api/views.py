@@ -2,7 +2,8 @@ from rest_framework import viewsets, permissions, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db.models import Sum
-from .models import Contributor, Contribution, Candidate, Committee, Party
+from .models import Contributor, Contribution, Candidate, Committee, Party, Employer
+from rest_framework.views import APIView
 from .serializers import (
     ContributionSerializer, 
     ContributorSerializer, 
