@@ -34,3 +34,7 @@ secret_key.py # If stored separately
 .coverage
 .tox/
 .eggs/
+
+# Gemini CLI
+GEMINI.md
+GEMINI.MD
