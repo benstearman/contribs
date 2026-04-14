@@ -11,7 +11,7 @@ router.register(r"parties", views.PartyViewSet)
 
 # Wire up our API using automatic URL routing.
 urlpatterns = [
-    path("", include(router.urls)),
     path('elections/summary/', views.ElectionSummaryView.as_view(), name='election-summary'),
+    path("", include(router.urls)),
     path("api-auth/", include("rest_framework.urls", namespace="rest_framework")),
 ]

@@ -34,3 +34,6 @@ secret_key.py # If stored separately
 .coverage
 .tox/
 .eggs/
+
+# Documentation
+docs/

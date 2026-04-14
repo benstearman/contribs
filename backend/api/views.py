@@ -59,10 +59,14 @@ class ContributorViewSet(viewsets.ModelViewSet):
     serializer_class = ContributorSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+
 class ElectionSummaryView(APIView):
     """Calculates top contributors and employers across the entire database."""
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
+    @method_decorator(cache_page(60*60*24))
     def get(self, request):
         # Top 10 Employers by total donation amount
         top_employers = Employer.objects.annotate(

@@ -38,6 +38,8 @@ class Committee(models.Model):
     CMTE_DSGN = models.CharField("Designation", max_length=1, null=True, blank=True)
     CAND_ID = models.ForeignKey(Candidate, on_delete=models.SET_NULL, null=True, blank=True, related_name='committees')
 
+    total_contributions = models.DecimalField("Total Contributions", max_digits=14, decimal_places=2, default=0.00)
+
     class Meta:
         db_table = "api_committee"
 

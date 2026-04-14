@@ -1,27 +1,39 @@
 from django.core.management.base import BaseCommand
 from django.db.models import Sum
-from api.models import Candidate
+from api.models import Candidate, Committee
 
 class Command(BaseCommand):
-    help = 'Calculates and saves total_contributions for all candidates'
+    help = 'Calculates and saves total_contributions for all candidates and committees'
 
     def handle(self, *args, **options):
-        self.stdout.write("Calculating totals...")
+        # 1. Update Committee Totals
+        self.stdout.write("Calculating committee totals...")
+        committees = Committee.objects.annotate(
+            calculated_total=Sum('contributions__amount')
+        )
         
-        # Do the heavy math here, in the background
+        cmte_updated = 0
+        for cmte in committees:
+            new_total = cmte.calculated_total or 0.00
+            if cmte.total_contributions != new_total:
+                cmte.total_contributions = new_total
+                cmte.save(update_fields=['total_contributions'])
+                cmte_updated += 1
+        
+        self.stdout.write(self.style.SUCCESS(f'Successfully updated {cmte_updated} committees.'))
+
+        # 2. Update Candidate Totals
+        self.stdout.write("Calculating candidate totals...")
         candidates = Candidate.objects.annotate(
             calculated_total=Sum('committees__contributions__amount')
         )
         
-        updated_count = 0
+        cand_updated = 0
         for candidate in candidates:
-            # If they have no contributions, default to 0.00
             new_total = candidate.calculated_total or 0.00
-            
-            # Only hit the database to save if the number actually changed
             if candidate.total_contributions != new_total:
                 candidate.total_contributions = new_total
                 candidate.save(update_fields=['total_contributions'])
-                updated_count += 1
+                cand_updated += 1
                 
-        self.stdout.write(self.style.SUCCESS(f'Successfully updated {updated_count} candidates.'))
+        self.stdout.write(self.style.SUCCESS(f'Successfully updated {cand_updated} candidates.'))

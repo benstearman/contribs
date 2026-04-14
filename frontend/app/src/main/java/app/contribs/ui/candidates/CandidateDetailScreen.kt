@@ -44,9 +44,12 @@ fun CandidateDetailScreen(
     var selectedCommitteeName by remember { mutableStateOf("") }
     var selectedCommitteeTres by remember { mutableStateOf("") }
     var selectedCommitteeType by remember { mutableStateOf("") }
+    var selectedCommitteeTotal by remember { mutableStateOf(0.0) }
 
     val candidate by viewModel.selectedCandidate.collectAsState()
     val committees by viewModel.candidateCommittees.collectAsState()
+
+    val currencyFormatter = java.text.NumberFormat.getCurrencyInstance(java.util.Locale.US)
 
     LaunchedEffect(candidateId) {
         viewModel.fetchCandidateDetail(candidateId)
@@ -217,7 +220,7 @@ fun CandidateDetailScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text("Total Received This Cycle")
-                            Text("$${candidateVal.totalContributions ?: 0.00}")
+                            Text(currencyFormatter.format(candidateVal.totalContributions ?: 0.00))
                         }
 
                         Spacer(modifier = Modifier.height(8.dp))
@@ -282,6 +285,7 @@ fun CandidateDetailScreen(
                                                 committee.name ?: "Unnamed Committee"
                                             selectedCommitteeType = committee.type ?: "Unknown"
                                             selectedCommitteeTres = committee.treasurer ?: "Unknown"
+                                            selectedCommitteeTotal = committee.totalContributions ?: 0.0
 
                                             showDialog = true
                                         }
@@ -359,13 +363,13 @@ fun CandidateDetailScreen(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        Text( //we can implement this later... just a placeholder/idea
+                        Text( 
                             "TOTAL MONEY RAISED:",
                             style = MaterialTheme.typography.labelMedium,
                             color = Color.Gray
                         )
                         Text(
-                            text = "coming soon...",
+                            text = currencyFormatter.format(selectedCommitteeTotal),
                             style = MaterialTheme.typography.bodyLarge
                         )
                     }
