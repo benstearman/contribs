@@ -20,27 +20,9 @@ services:
       - PYTHONUNBUFFERED=1
     depends_on:
       - db
-
-  # --- 2. Caddy Reverse Proxy ---
-  caddy:
-    build:
-      context: .
-      dockerfile: Dockerfile.caddy
-    container_name: contribs_caddy
-    restart: always
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
-      - caddy_data:/data
-    environment:
-      - CADDY_DOMAIN=${CADDY_DOMAIN}
-      - CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}
-    depends_on:
-      - web
-      - wiki
-      - vaultwarden
+    networks:
+      - default
+      - shared-proxy
 
   # --- 3. Database (PostgreSQL) ---
   db:
@@ -101,6 +83,9 @@ services:
       - wiki_data:/wiki
     depends_on:
       - db
+    networks:
+      - default
+      - shared-proxy
 
   # --- 7. Vaultwarden (Passwords) ---
   vaultwarden:
@@ -114,10 +99,17 @@ services:
       - vaultwarden_data:/data
     depends_on:
       - db
+    networks:
+      - default
+      - shared-proxy
+
+networks:
+  default:
+  shared-proxy:
+    external: true
 
 volumes:
   postgres_data:
-  caddy_data:
   portainer_data:
   pgadmin_data:
   wiki_data:
