@@ -1,9 +1,9 @@
 from django.core.management.base import BaseCommand
 from django.db.models import Sum
-from api.models import Candidate, Committee
+from api.models import Candidate, Committee, Employer, Contributor
 
 class Command(BaseCommand):
-    help = 'Calculates and saves total_contributions for all candidates and committees'
+    help = 'Calculates and saves total_contributions for all candidates, committees, employers, and contributors'
 
     def handle(self, *args, **options):
         # 1. Update Committee Totals
@@ -37,3 +37,35 @@ class Command(BaseCommand):
                 cand_updated += 1
                 
         self.stdout.write(self.style.SUCCESS(f'Successfully updated {cand_updated} candidates.'))
+
+        # 3. Update Contributor Totals
+        self.stdout.write("Calculating contributor totals...")
+        contributors = Contributor.objects.annotate(
+            calculated_total=Sum('contributions__amount')
+        )
+        
+        cont_updated = 0
+        for contributor in contributors:
+            new_total = contributor.calculated_total or 0.00
+            if contributor.total_contributions != new_total:
+                contributor.total_contributions = new_total
+                contributor.save(update_fields=['total_contributions'])
+                cont_updated += 1
+        
+        self.stdout.write(self.style.SUCCESS(f'Successfully updated {cont_updated} contributors.'))
+
+        # 4. Update Employer Totals
+        self.stdout.write("Calculating employer totals...")
+        employers = Employer.objects.annotate(
+            calculated_total=Sum('contributor__contributions__amount')
+        )
+        
+        emp_updated = 0
+        for employer in employers:
+            new_total = employer.calculated_total or 0.00
+            if employer.total_contributions != new_total:
+                employer.total_contributions = new_total
+                employer.save(update_fields=['total_contributions'])
+                emp_updated += 1
+        
+        self.stdout.write(self.style.SUCCESS(f'Successfully updated {emp_updated} employers.'))

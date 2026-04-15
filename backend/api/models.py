@@ -48,6 +48,7 @@ class Committee(models.Model):
 
 class Employer(models.Model):
     name = models.CharField(max_length=200, unique=True, db_index=True)
+    total_contributions = models.DecimalField("Total Contributions", max_digits=14, decimal_places=2, default=0.00)
 
     def __str__(self):
         return self.name
@@ -56,6 +57,7 @@ class Contributor(models.Model):
     full_name = models.CharField(max_length=200, db_index=True)
     zip_code = models.CharField(max_length=10, db_index=True)
     employer = models.ForeignKey(Employer, on_delete=models.SET_NULL, null=True, blank=True)
+    total_contributions = models.DecimalField("Total Contributions", max_digits=14, decimal_places=2, default=0.00)
 
     class Meta:
         # Prevents duplicate contributors during import
