@@ -37,3 +37,6 @@ secret_key.py # If stored separately
 
 # Documentation
 docs/
+
+# Django cache
+backend/django_cache/
