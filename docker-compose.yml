@@ -1,7 +1,9 @@
 services:
   # --- 1. Web Service (Django Backend) ---
   web:
-    build: ./backend
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: contribs_web
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
