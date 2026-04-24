@@ -67,14 +67,18 @@ class Contributor(models.Model):
         return self.full_name
 
 class Contribution(models.Model):
-    contributor = models.ForeignKey(Contributor, on_delete=models.CASCADE, related_name='contributions')
-    committee = models.ForeignKey(Committee, on_delete=models.CASCADE, related_name='contributions')
-    amount = models.DecimalField(max_digits=14, decimal_places=2)
+    contributor = models.ForeignKey(Contributor, on_delete=models.CASCADE, related_name='contributions', db_index=True)
+    committee = models.ForeignKey(Committee, on_delete=models.CASCADE, related_name='contributions', db_index=True)
+    amount = models.DecimalField(max_digits=14, decimal_places=2, db_index=True)
     receipt_date = models.DateField(db_index=True)
     fec_sub_id = models.BigIntegerField(unique=True, null=True, help_text="Original FEC SUB_ID")
 
     class Meta:
         ordering = ['-receipt_date']
+        indexes = [
+            models.Index(fields=['contributor', 'committee']),
+            models.Index(fields=['receipt_date', 'amount']),
+        ]
 
 class FECContribution(models.Model):
     CMTE_ID = models.CharField(

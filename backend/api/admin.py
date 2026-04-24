@@ -116,3 +116,6 @@ class FECContributionAdmin(admin.ModelAdmin):
     list_filter = ('STATE', 'TRANSACTION_DT')
     search_fields = ('NAME', 'CMTE_ID')
     show_full_result_count = False
+    list_per_page = 50
+    # Use raw_id_fields for any foreign keys that might be added in the future
+    # list_select_related = ('...', )
