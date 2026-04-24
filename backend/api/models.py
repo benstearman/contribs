@@ -75,10 +75,6 @@ class Contribution(models.Model):
 
     class Meta:
         ordering = ['-receipt_date']
-        indexes = [
-            models.Index(fields=['amount']),
-            models.Index(fields=['receipt_date', 'amount']),
-        ]
 
 class FECContribution(models.Model):
     CMTE_ID = models.CharField(

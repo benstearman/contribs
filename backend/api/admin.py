@@ -105,13 +105,10 @@ class ContributionAdmin(admin.ModelAdmin):
     # Added both clear and import actions
     actions = [run_clear_contributions, run_contribution_import]
     
-    list_display = ('contributor', 'committee', 'amount', 'receipt_date', 'fec_sub_id')
-    list_filter = ('receipt_date',)
-    search_fields = ('contributor__full_name', 'committee__CMTE_NM', 'fec_sub_id')
+    list_display = ('contributor', 'committee', 'amount', 'receipt_date')
     raw_id_fields = ('contributor', 'committee')
     list_select_related = ('contributor', 'committee')
     show_full_result_count = False
-    date_hierarchy = 'receipt_date'
 
 @admin.register(FECContribution)
 class FECContributionAdmin(admin.ModelAdmin):
