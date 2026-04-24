@@ -33,6 +33,9 @@ import app.contribs.ui.navigation.ContribsScreen
 import app.contribs.ui.navigation.bottomNavItems
 import app.contribs.ui.theme.ContribsTheme
 
+import app.contribs.ui.contributions.ContributionViewModel
+import app.contribs.ui.contributions.ContributionDetail
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -86,7 +89,26 @@ fun ContribsApp() {
             // --- Other Tabs ---
 
             composable(ContribsScreen.Contributions.route) {
-                ContributionListScreen()
+                val sharedViewModel: ContributionViewModel = viewModel()
+                ContributionListScreen(
+                    viewModel = sharedViewModel,
+                    onContributionClick = { contributionId ->
+                        navController.navigate("contribution_detail/$contributionId")
+                    }
+                )
+            }
+            composable("contribution_detail/{contributionId}") { backStackEntry ->
+                val sharedViewModel: ContributionViewModel = viewModel()
+                val contributionId =
+                    backStackEntry.arguments?.getString("contributionId")?.toIntOrNull() ?: 0
+                ContributionDetail(
+                    contributionId = contributionId,
+                    viewModel = sharedViewModel,
+                    onNavigateBack = { navController.popBackStack() },
+                    onCandidateClick = { candidateId ->
+                        navController.navigate("candidate_detail/$candidateId")
+                    }
+                )
             }
             composable(ContribsScreen.Profile.route) {
                 ProfileScreen()

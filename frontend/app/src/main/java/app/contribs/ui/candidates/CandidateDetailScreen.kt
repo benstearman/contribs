@@ -31,6 +31,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import app.contribs.data.model.getFullCommitteeType
 import androidx.compose.material.icons.filled.AccountBalance
+import app.contribs.ui.theme.partyColor
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -177,7 +178,7 @@ fun CandidateDetailScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 8.dp)
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
                 )
                 {
                     Column(modifier = Modifier.padding(16.dp)) {
@@ -201,7 +202,7 @@ fun CandidateDetailScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 8.dp)
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
 
@@ -240,7 +241,7 @@ fun CandidateDetailScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 8.dp)
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
                 )
                 {
                     Column(modifier = Modifier.padding(10.dp)) {
@@ -263,7 +264,7 @@ fun CandidateDetailScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 8.dp)
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
@@ -384,12 +385,4 @@ fun CandidateDetailScreen(
     }
 }
 
-//function for making the candidate detail page bg color change according to party
-private fun partyColor(party: String?): Color {
-    return when (party) {
-        "DEM" -> Color(0xFF1141B9)
-        "REP" -> Color(0xFFAF0E0E)
-        "GRE", "IGR", "DGR", "DCG", "PG" -> Color(0xFF5BAF47) //"green" parties
-        else -> Color(0xFFD3D3D3)
-    }
-}
+

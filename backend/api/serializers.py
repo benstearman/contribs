@@ -75,8 +75,8 @@ class CommitteeSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Committee
-        fields = ["CMTE_ID", "CMTE_NM", "CMTE_TP", "candidate_name", "TRES_NM", "total_contributions"]
-
+        fields = ["CMTE_ID", "CMTE_NM", "CMTE_TP", "candidate_name", "CAND_ID", "TRES_NM", "total_contributions"]
+        
 class EmployerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employer
