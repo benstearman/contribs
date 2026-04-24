@@ -7,8 +7,6 @@ services:
     volumes:
       - ./backend:/app
       - ./data:/app/data
-    ports:
-      - "8000:8000"
     environment:
       - DB_NAME=${POSTGRES_DB}
       - DB_USER=${POSTGRES_USER}
@@ -20,14 +18,12 @@ services:
       - PYTHONUNBUFFERED=1
     depends_on:
       - db
-    networks:
-      - default
-      - shared-proxy
 
   # --- 3. Database (PostgreSQL) ---
   db:
     image: postgres:15-alpine
     container_name: contribs_db
+    shm_size: '256mb'
     environment:
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
@@ -42,8 +38,6 @@ services:
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
-    ports:
-      - "9000:9000"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer_data:/data
@@ -58,8 +52,6 @@ services:
       - PGADMIN_DEFAULT_PASSWORD=${POSTGRES_PASSWORD}
       - PGADMIN_CONFIG_SERVER_MODE=False
       - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False
-    ports:
-      - "5050:80"
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     depends_on:
@@ -77,15 +69,10 @@ services:
       - DB_USER=${POSTGRES_USER}
       - DB_PASS=${POSTGRES_PASSWORD}
       - DB_NAME=wiki
-    ports:
-      - "3000:3000"
     volumes:
       - wiki_data:/wiki
     depends_on:
       - db
-    networks:
-      - default
-      - shared-proxy
 
   # --- 7. Vaultwarden (Passwords) ---
   vaultwarden:
@@ -99,9 +86,6 @@ services:
       - vaultwarden_data:/data
     depends_on:
       - db
-    networks:
-      - default
-      - shared-proxy
 
   # --- 8. Cloudflare Tunnel ---
   tunnel:
@@ -112,18 +96,10 @@ services:
     env_file: .env
     environment:
       - TUNNEL_TOKEN=${TUNNEL_TOKEN}
-    networks:
-      - default
-      - shared-proxy
-
-networks:
-  default:
-  shared-proxy:
-    external: true
 
 volumes:
   postgres_data:
   portainer_data:
-  pgadmin_data:
   wiki_data:
   vaultwarden_data:
+  pgadmin_data:
