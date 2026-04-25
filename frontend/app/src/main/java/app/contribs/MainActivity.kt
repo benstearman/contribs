@@ -70,7 +70,7 @@ fun ContribsApp() {
             }
             // --- Candidates Flow ---
             composable(
-                route = ContribsScreen.Candidates.routePattern,
+                route = ContribsScreen.Candidates.route,
                 arguments = listOf(
                     navArgument("state") { type = NavType.StringType; nullable = true; defaultValue = null },
                     navArgument("office") { type = NavType.StringType; nullable = true; defaultValue = null },
