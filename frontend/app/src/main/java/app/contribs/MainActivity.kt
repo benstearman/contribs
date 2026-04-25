@@ -150,12 +150,13 @@ fun ContribsBottomNavigation(navController: NavHostController) {
                 label = { Text(screen.label) },
                 selected = currentDestination?.hierarchy?.any { it.route?.substringBefore("?") == baseRoute } == true,
                 onClick = {
+                    val isStartDestination = screen == ContribsScreen.Elections
                     navController.navigate(baseRoute) {
                         popUpTo(navController.graph.findStartDestination().id) {
-                            saveState = true
+                            saveState = !isStartDestination
                         }
                         launchSingleTop = true
-                        restoreState = true
+                        restoreState = !isStartDestination
                     }
                 }
             )

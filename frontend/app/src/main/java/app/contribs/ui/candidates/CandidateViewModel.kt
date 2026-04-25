@@ -36,13 +36,14 @@ class CandidateViewModel : ViewModel() {
     private var filterState: String? = null
     private var filterOffice: String? = null
     private var filterYear: Int? = null
+    private var isFirstLoad = true
 
     // Expose whether any filters are active
     private val _isFiltered = MutableStateFlow(false)
     val isFiltered: StateFlow<Boolean> = _isFiltered.asStateFlow()
 
     init {
-        // loadNextPage is now triggered by setInitialFilters in the UI
+        // First load is now handled by setInitialFilters to coordinate with navigation args
     }
 
     private fun sanitize(value: String?): String? {
@@ -54,7 +55,8 @@ class CandidateViewModel : ViewModel() {
         val sOffice = sanitize(office)
         val sYear = year?.takeIf { it != 0 }
 
-        if (filterState != sState || filterOffice != sOffice || filterYear != sYear) {
+        if (isFirstLoad || filterState != sState || filterOffice != sOffice || filterYear != sYear) {
+            isFirstLoad = false
             filterState = sState
             filterOffice = sOffice
             filterYear = sYear
@@ -65,7 +67,6 @@ class CandidateViewModel : ViewModel() {
             loadNextPage()
         }
     }
-
     fun clearFilters() {
         filterState = null
         filterOffice = null
