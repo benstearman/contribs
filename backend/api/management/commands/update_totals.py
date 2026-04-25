@@ -57,7 +57,7 @@ class Command(BaseCommand):
         # 4. Update Employer Totals
         self.stdout.write("Calculating employer totals...")
         employers = Employer.objects.annotate(
-            calculated_total=Sum('contributor__contributions__amount')
+            calculated_total=Sum('contributor_set__contributions__amount')
         )
         
         emp_updated = 0
