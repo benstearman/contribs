@@ -56,6 +56,7 @@ class Command(BaseCommand):
 
         # 4. Update Employer Totals
         self.stdout.write("Calculating employer totals...")
+        # Join: Employer -> Contributor (reverse) -> Contribution (reverse)
         employers = Employer.objects.annotate(
             calculated_total=Sum('contributor__contributions__amount')
         )
@@ -69,3 +70,8 @@ class Command(BaseCommand):
                 emp_updated += 1
         
         self.stdout.write(self.style.SUCCESS(f'Successfully updated {emp_updated} employers.'))
+
+        # 5. Clear Cache
+        from django.core.cache import cache
+        cache.clear()
+        self.stdout.write(self.style.SUCCESS('Successfully cleared API cache.'))
