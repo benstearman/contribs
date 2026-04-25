@@ -149,7 +149,8 @@ fun ContribsBottomNavigation(navController: NavHostController) {
                 label = { Text(screen.label) },
                 selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
                 onClick = {
-                    navController.navigate(screen.route) {
+                    val route = if (screen == ContribsScreen.Candidates) "candidates" else screen.route
+                    navController.navigate(route) {
                         // Pop up to the start destination of the graph to
                         // avoid building up a large stack of destinations
                         // on the back stack as users select items

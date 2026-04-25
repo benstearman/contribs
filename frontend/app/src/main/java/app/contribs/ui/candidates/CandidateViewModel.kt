@@ -36,6 +36,10 @@ class CandidateViewModel : ViewModel() {
     private var filterOffice: String? = null
     private var filterYear: Int? = null
 
+    // Expose whether any filters are active
+    private val _isFiltered = MutableStateFlow(false)
+    val isFiltered: StateFlow<Boolean> = _isFiltered.asStateFlow()
+
     init {
         loadNextPage()
     }
@@ -53,11 +57,24 @@ class CandidateViewModel : ViewModel() {
             filterState = sState
             filterOffice = sOffice
             filterYear = sYear
+            _isFiltered.value = filterState != null || filterOffice != null || filterYear != null
             currentPage = 1
             isLastPage = false
             _candidates.value = emptyList()
             loadNextPage()
         }
+    }
+
+    fun clearFilters() {
+        filterState = null
+        filterOffice = null
+        filterYear = null
+        _searchQuery.value = ""
+        _isFiltered.value = false
+        currentPage = 1
+        isLastPage = false
+        _candidates.value = emptyList()
+        loadNextPage()
     }
 
     fun onSearchQueryChange(newQuery: String) {

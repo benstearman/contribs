@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.FilterListOff
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
@@ -30,6 +31,7 @@ fun CandidateListScreen(
 ) {
     val candidates by viewModel.candidates.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    val isFiltered by viewModel.isFiltered.collectAsState()
 
     LaunchedEffect(initialState, initialOffice, initialYear) {
         viewModel.setInitialFilters(initialState, initialOffice, initialYear)
@@ -38,7 +40,17 @@ fun CandidateListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Candidates") }
+                title = { Text("Candidates") },
+                actions = {
+                    if (isFiltered || searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { viewModel.clearFilters() }) {
+                            Icon(
+                                imageVector = Icons.Default.FilterListOff,
+                                contentDescription = "Clear Filters"
+                            )
+                        }
+                    }
+                }
             )
         }
     ) { innerPadding: PaddingValues ->
