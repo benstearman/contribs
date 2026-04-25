@@ -67,7 +67,6 @@ services:
     image: squidfunk/mkdocs-material
     container_name: contribs_wiki
     restart: unless-stopped
-    command: serve -a 0.0.0.0:80
     volumes:
       - ./:/docs
 
