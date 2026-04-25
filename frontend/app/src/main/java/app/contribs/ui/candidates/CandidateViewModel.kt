@@ -32,8 +32,20 @@ class CandidateViewModel : ViewModel() {
 
     private var searchJob: Job? = null
 
-    init {
-        loadNextPage() // Fetch the first page when the screen opens
+    private var filterState: String? = null
+    private var filterOffice: String? = null
+    private var filterYear: Int? = null
+
+    fun setInitialFilters(state: String?, office: String?, year: Int?) {
+        if (filterState != state || filterOffice != office || filterYear != year) {
+            filterState = state
+            filterOffice = office
+            filterYear = year
+            currentPage = 1
+            isLastPage = false
+            _candidates.value = emptyList()
+            loadNextPage()
+        }
     }
 
     fun onSearchQueryChange(newQuery: String) {
@@ -54,10 +66,13 @@ class CandidateViewModel : ViewModel() {
         isLoading = true
         viewModelScope.launch {
             try {
-                // Fetch the specific page with search query
+                // Fetch the specific page with search query and filters
                 val response = RetrofitClient.instance.getCandidates(
                     page = currentPage,
-                    search = _searchQuery.value.ifBlank { null }
+                    search = _searchQuery.value.ifBlank { null },
+                    state = filterState,
+                    office = filterOffice,
+                    year = filterYear
                 )
 
                 // If it's the first page, replace results. Otherwise, append.

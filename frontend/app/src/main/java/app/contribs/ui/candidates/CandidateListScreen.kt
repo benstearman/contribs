@@ -23,10 +23,17 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun CandidateListScreen(
     viewModel: CandidateViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    initialState: String? = null,
+    initialOffice: String? = null,
+    initialYear: Int? = null,
     onCandidateClick: (String) -> Unit
 ) {
     val candidates by viewModel.candidates.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+
+    LaunchedEffect(initialState, initialOffice, initialYear) {
+        viewModel.setInitialFilters(initialState, initialOffice, initialYear)
+    }
 
     Scaffold(
         topBar = {

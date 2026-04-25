@@ -3,6 +3,7 @@ package app.contribs.data.api
 import app.contribs.data.model.Candidate
 import app.contribs.data.model.Committee
 import app.contribs.data.model.Contribution
+import app.contribs.data.model.Election
 import app.contribs.data.model.ElectionSummary
 import app.contribs.data.model.PaginatedResponse
 import okhttp3.OkHttpClient
@@ -15,11 +16,13 @@ import java.util.concurrent.TimeUnit
 
 // 1. Define the endpoints that match your Django urls.py
 interface ContribsApiService {
-// ... existing methods
     @GET("candidates/")
     suspend fun getCandidates(
         @Query("page") page: Int = 1,
-        @Query("search") search: String? = null
+        @Query("search") search: String? = null,
+        @Query("state") state: String? = null,
+        @Query("office") office: String? = null,
+        @Query("year") year: Int? = null
     ): PaginatedResponse<Candidate>
 
     @GET("candidates/{id}/")
@@ -42,6 +45,12 @@ interface ContribsApiService {
 
     @GET("elections/summary/")
     suspend fun getElectionSummary(): ElectionSummary
+
+    @GET("elections/list/")
+    suspend fun getElections(
+        @Query("state") state: String? = null,
+        @Query("office") office: String? = null
+    ): List<Election>
 }
 
 // 2. Build the Retrofit instance

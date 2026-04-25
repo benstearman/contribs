@@ -13,10 +13,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import app.contribs.data.model.ElectionSummary
 
 // Feature Screen Imports
@@ -60,15 +62,33 @@ fun ContribsApp() {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(ContribsScreen.Elections.route) {
-                ElectionScreen()
+                ElectionScreen(
+                    onElectionClick = { state, office, year ->
+                        navController.navigate(ContribsScreen.Candidates.createRoute(state, office, year))
+                    }
+                )
             }
             // --- Candidates Flow ---
-            composable(ContribsScreen.Candidates.route) {
+            composable(
+                route = ContribsScreen.Candidates.route,
+                arguments = listOf(
+                    navArgument("state") { type = NavType.StringType; nullable = true },
+                    navArgument("office") { type = NavType.StringType; nullable = true },
+                    navArgument("year") { type = NavType.IntType; defaultValue = 0 }
+                )
+            ) { backStackEntry ->
+                val state = backStackEntry.arguments?.getString("state")
+                val office = backStackEntry.arguments?.getString("office")
+                val year = backStackEntry.arguments?.getInt("year")?.takeIf { it != 0 }
+                
                 // Scoped ViewModel so the list and detail screen share the same data
                 val sharedViewModel: CandidateViewModel = viewModel()
 
                 CandidateListScreen(
                     viewModel = sharedViewModel,
+                    initialState = state,
+                    initialOffice = office,
+                    initialYear = year,
                     onCandidateClick = { candidateId ->
                         navController.navigate("candidate_detail/$candidateId")
                     }
