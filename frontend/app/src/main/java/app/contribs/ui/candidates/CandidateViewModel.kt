@@ -42,7 +42,7 @@ class CandidateViewModel : ViewModel() {
     val isFiltered: StateFlow<Boolean> = _isFiltered.asStateFlow()
 
     init {
-        loadNextPage()
+        // loadNextPage is now triggered by setInitialFilters in the UI
     }
 
     private fun sanitize(value: String?): String? {

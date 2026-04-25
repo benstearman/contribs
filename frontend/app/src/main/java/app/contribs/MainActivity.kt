@@ -147,20 +147,14 @@ fun ContribsBottomNavigation(navController: NavHostController) {
             NavigationBarItem(
                 icon = { Icon(screen.icon, contentDescription = null) },
                 label = { Text(screen.label) },
-                selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
+                selected = currentDestination?.hierarchy?.any { it.route?.startsWith(screen.route.substringBefore("?")) == true } == true,
                 onClick = {
                     val route = if (screen == ContribsScreen.Candidates) "candidates" else screen.route
                     navController.navigate(route) {
-                        // Pop up to the start destination of the graph to
-                        // avoid building up a large stack of destinations
-                        // on the back stack as users select items
                         popUpTo(navController.graph.findStartDestination().id) {
                             saveState = true
                         }
-                        // Avoid multiple copies of the same destination when
-                        // reselecting the same item
                         launchSingleTop = true
-                        // Restore state when reselecting a previously selected item
                         restoreState = true
                     }
                 }
