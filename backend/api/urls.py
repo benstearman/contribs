@@ -13,6 +13,7 @@ router.register(r"parties", views.PartyViewSet)
 urlpatterns = [
     path('elections/summary/', views.ElectionSummaryView.as_view(), name='election-summary'),
     path('elections/list/', views.ElectionListView.as_view(), name='election-list'),
+    path('candidates/filters/', views.CandidateFiltersView.as_view(), name='candidates-filters'),
     path("", include(router.urls)),
     path("api-auth/", include("rest_framework.urls", namespace="rest_framework")),
 ]

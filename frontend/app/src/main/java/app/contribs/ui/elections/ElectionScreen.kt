@@ -7,9 +7,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -25,10 +23,14 @@ fun ElectionScreen(
 ) {
     val summary by viewModel.summary.collectAsState()
     val elections by viewModel.elections.collectAsState()
+    val filters by viewModel.filters.collectAsState()
     val selectedState by viewModel.selectedState.collectAsState()
     val selectedOffice by viewModel.selectedOffice.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val currencyFormatter = NumberFormat.getCurrencyInstance(Locale.US)
+
+    var stateExpanded by remember { mutableStateOf(false) }
+    var officeExpanded by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("2026 Elections") }) }
@@ -42,20 +44,80 @@ fun ElectionScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = selectedState,
-                    onValueChange = { viewModel.onStateChange(it) },
-                    label = { Text("State") },
-                    modifier = Modifier.weight(1f),
-                    placeholder = { Text("e.g. NY") }
-                )
-                OutlinedTextField(
-                    value = selectedOffice,
-                    onValueChange = { viewModel.onOfficeChange(it) },
-                    label = { Text("Office") },
-                    modifier = Modifier.weight(1f),
-                    placeholder = { Text("H, S, P") }
-                )
+                // State Dropdown
+                ExposedDropdownMenuBox(
+                    expanded = stateExpanded,
+                    onExpandedChange = { stateExpanded = !stateExpanded },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    OutlinedTextField(
+                        value = selectedState.ifEmpty { "All States" },
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("State") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = stateExpanded) },
+                        modifier = Modifier.menuAnchor()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = stateExpanded,
+                        onDismissRequest = { stateExpanded = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("All States") },
+                            onClick = {
+                                viewModel.onStateChange("")
+                                stateExpanded = false
+                            }
+                        )
+                        filters?.states?.forEach { state ->
+                            DropdownMenuItem(
+                                text = { Text(state) },
+                                onClick = {
+                                    viewModel.onStateChange(state)
+                                    stateExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                // Office Dropdown
+                ExposedDropdownMenuBox(
+                    expanded = officeExpanded,
+                    onExpandedChange = { officeExpanded = !officeExpanded },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    val officeName = filters?.offices?.find { it.id == selectedOffice }?.name ?: "All Offices"
+                    OutlinedTextField(
+                        value = officeName,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Office") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = officeExpanded) },
+                        modifier = Modifier.menuAnchor()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = officeExpanded,
+                        onDismissRequest = { officeExpanded = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("All Offices") },
+                            onClick = {
+                                viewModel.onOfficeChange("")
+                                officeExpanded = false
+                            }
+                        )
+                        filters?.offices?.forEach { office ->
+                            DropdownMenuItem(
+                                text = { Text(office.name) },
+                                onClick = {
+                                    viewModel.onOfficeChange(office.id)
+                                    officeExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))

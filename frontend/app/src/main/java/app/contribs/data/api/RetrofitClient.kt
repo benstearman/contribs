@@ -1,6 +1,7 @@
 package app.contribs.data.api
 
 import app.contribs.data.model.Candidate
+import app.contribs.data.model.CandidateFilters
 import app.contribs.data.model.Committee
 import app.contribs.data.model.Contribution
 import app.contribs.data.model.Election
@@ -24,6 +25,9 @@ interface ContribsApiService {
         @Query("office") office: String? = null,
         @Query("year") year: Int? = null
     ): PaginatedResponse<Candidate>
+
+    @GET("candidates/filters/")
+    suspend fun getCandidateFilters(): CandidateFilters
 
     @GET("candidates/{id}/")
     suspend fun getCandidateDetail(@Path("id") id: String): Candidate

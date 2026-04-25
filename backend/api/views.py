@@ -123,3 +123,22 @@ class ElectionListView(APIView):
         ]
         
         return Response(results)
+
+class CandidateFiltersView(APIView):
+    """Returns unique states and offices available in the database."""
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get(self, request):
+        states = Candidate.objects.exclude(CAND_OFFICE_ST__isnull=True).exclude(CAND_OFFICE_ST='').values_list('CAND_OFFICE_ST', flat=True).distinct().order_by('CAND_OFFICE_ST')
+        
+        # Hardcoded based on model choices
+        offices = [
+            {"id": "H", "name": "House"},
+            {"id": "S", "name": "Senate"},
+            {"id": "P", "name": "President"}
+        ]
+        
+        return Response({
+            "states": list(states),
+            "offices": offices
+        })
