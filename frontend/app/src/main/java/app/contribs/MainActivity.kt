@@ -70,7 +70,7 @@ fun ContribsApp() {
             }
             // --- Candidates Flow ---
             composable(
-                route = ContribsScreen.Candidates.pattern,
+                route = ContribsScreen.Candidates.route,
                 arguments = listOf(
                     navArgument("state") { type = NavType.StringType; nullable = true; defaultValue = null },
                     navArgument("office") { type = NavType.StringType; nullable = true; defaultValue = null },
@@ -144,12 +144,13 @@ fun ContribsBottomNavigation(navController: NavHostController) {
         val currentDestination = navBackStackEntry?.destination
 
         bottomNavItems.forEach { screen ->
+            val baseRoute = screen.route.substringBefore("?")
             NavigationBarItem(
                 icon = { Icon(screen.icon, contentDescription = null) },
                 label = { Text(screen.label) },
-                selected = currentDestination?.hierarchy?.any { it.route?.substringBefore("?") == screen.route } == true,
+                selected = currentDestination?.hierarchy?.any { it.route?.substringBefore("?") == baseRoute } == true,
                 onClick = {
-                    navController.navigate(screen.route) {
+                    navController.navigate(baseRoute) {
                         popUpTo(navController.graph.findStartDestination().id) {
                             saveState = true
                         }

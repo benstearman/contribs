@@ -9,8 +9,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 
 sealed class ContribsScreen(val route: String, val label: String, val icon: ImageVector) {
     object Elections : ContribsScreen("elections", "Elections", Icons.Filled.HowToVote)
-    object Candidates : ContribsScreen("candidates", "Candidates", Icons.Filled.Person) {
-        const val pattern = "candidates?state={state}&office={office}&year={year}"
+    object Candidates : ContribsScreen("candidates?state={state}&office={office}&year={year}", "Candidates", Icons.Filled.Person) {
         fun createRoute(state: String? = null, office: String? = null, year: Int? = null): String {
             val builder = StringBuilder("candidates")
             val params = mutableListOf<String>()
