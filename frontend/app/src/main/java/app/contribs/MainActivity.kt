@@ -70,10 +70,10 @@ fun ContribsApp() {
             }
             // --- Candidates Flow ---
             composable(
-                route = ContribsScreen.Candidates.route,
+                route = ContribsScreen.Candidates.routePattern,
                 arguments = listOf(
-                    navArgument("state") { type = NavType.StringType; nullable = true },
-                    navArgument("office") { type = NavType.StringType; nullable = true },
+                    navArgument("state") { type = NavType.StringType; nullable = true; defaultValue = null },
+                    navArgument("office") { type = NavType.StringType; nullable = true; defaultValue = null },
                     navArgument("year") { type = NavType.IntType; defaultValue = 0 }
                 )
             ) { backStackEntry ->

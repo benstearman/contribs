@@ -36,11 +36,23 @@ class CandidateViewModel : ViewModel() {
     private var filterOffice: String? = null
     private var filterYear: Int? = null
 
+    init {
+        loadNextPage()
+    }
+
+    private fun sanitize(value: String?): String? {
+        return value?.takeIf { it.isNotEmpty() && !it.startsWith("{") }
+    }
+
     fun setInitialFilters(state: String?, office: String?, year: Int?) {
-        if (filterState != state || filterOffice != office || filterYear != year) {
-            filterState = state
-            filterOffice = office
-            filterYear = year
+        val sState = sanitize(state)
+        val sOffice = sanitize(office)
+        val sYear = year?.takeIf { it != 0 }
+
+        if (filterState != sState || filterOffice != sOffice || filterYear != sYear) {
+            filterState = sState
+            filterOffice = sOffice
+            filterYear = sYear
             currentPage = 1
             isLastPage = false
             _candidates.value = emptyList()
