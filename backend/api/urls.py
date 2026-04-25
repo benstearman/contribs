@@ -5,7 +5,7 @@ from api import views
 router = routers.DefaultRouter()
 router.register(r"contributions", views.ContributionViewSet)
 router.register(r"contributors", views.ContributorViewSet)
-router.register(r"candidates", views.CandidateViewSet)
+router.register(r"candidates", views.CandidateViewSet, basename="candidates")
 router.register(r"committees", views.CommitteeViewSet)
 router.register(r"parties", views.PartyViewSet)
 
