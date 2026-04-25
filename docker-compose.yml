@@ -62,22 +62,14 @@ services:
     depends_on:
       - db
 
-  # --- 6. Wiki.js (Documentation) ---
+  # --- 6. MkDocs (Landing Page) ---
   wiki:
-    image: ghcr.io/requarks/wiki:2
+    image: squidfunk/mkdocs-material
     container_name: contribs_wiki
     restart: unless-stopped
-    environment:
-      - DB_TYPE=postgres
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_USER=${POSTGRES_USER}
-      - DB_PASS=${POSTGRES_PASSWORD}
-      - DB_NAME=wiki
+    command: serve -a 0.0.0.0:80
     volumes:
-      - wiki_data:/wiki
-    depends_on:
-      - db
+      - ./:/docs
 
   # --- 7. Vaultwarden (Passwords) ---
   vaultwarden:
