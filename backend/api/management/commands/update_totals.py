@@ -72,7 +72,8 @@ class Command(BaseCommand):
 
             # Step 5: Finalize
             self.stdout.write("5. Clearing cache...")
-            cursor.execute("DELETE FROM django_cache;")
+            from django.core.cache import cache
+            cache.clear()
             
             # Reset
             cursor.execute("SET synchronous_commit = on;")
