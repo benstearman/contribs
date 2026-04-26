@@ -143,6 +143,13 @@ fun ElectionScreen(
                                 "P" -> "President"
                                 else -> election.office ?: ""
                             }}") },
+                            trailingContent = {
+                                Text(
+                                    text = currencyFormatter.format(election.totalAmount ?: 0.0),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            },
                             modifier = Modifier.clickable { 
                                 onElectionClick(election.state, election.office, election.year)
                             }

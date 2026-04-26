@@ -95,19 +95,21 @@ class ElectionSummaryView(APIView):
         })
 
 class ElectionListView(APIView):
-    """Returns a list of unique elections (year, state, office) filtered by query params."""
+    """Returns a list of unique elections (year, state, office) filtered by query params, with total contributions."""
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def get(self, request):
         state = request.query_params.get('state')
         office = request.query_params.get('office')
         
-        # Get distinct combinations of year, state, office
+        # Group by year, state, office and sum candidate totals
         queryset = Candidate.objects.values(
             'CAND_ELECTION_YR', 
             'CAND_OFFICE_ST', 
             'CAND_OFFICE'
-        ).distinct().order_by('-CAND_ELECTION_YR', 'CAND_OFFICE_ST', 'CAND_OFFICE')
+        ).annotate(
+            total_amount=Sum('total_contributions')
+        ).order_by('-CAND_ELECTION_YR', 'CAND_OFFICE_ST', 'CAND_OFFICE')
 
         if state:
             queryset = queryset.filter(CAND_OFFICE_ST=state)
@@ -118,7 +120,8 @@ class ElectionListView(APIView):
             {
                 "year": item['CAND_ELECTION_YR'],
                 "state": item['CAND_OFFICE_ST'],
-                "office": item['CAND_OFFICE']
+                "office": item['CAND_OFFICE'],
+                "total_amount": float(item['total_amount'] or 0.0)
             } for item in queryset
         ]
         
