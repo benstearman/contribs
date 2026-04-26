@@ -27,7 +27,7 @@ class CandidateViewSet(viewsets.ModelViewSet):
     search_fields = ['CAND_NAME']
 
     def get_queryset(self):
-        queryset = Candidate.objects.select_related('CAND_PTY_AFFILIATION').all().order_by("CAND_NAME")
+        queryset = Candidate.objects.select_related('CAND_PTY_AFFILIATION').all().order_by("-total_contributions", "CAND_NAME")
         
         # Manual filtering for Election list navigation
         state = self.request.query_params.get('state')
