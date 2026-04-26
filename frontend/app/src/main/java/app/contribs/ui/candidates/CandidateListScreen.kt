@@ -17,8 +17,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import java.text.NumberFormat
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,6 +34,7 @@ fun CandidateListScreen(
     val candidates by viewModel.candidates.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val isFiltered by viewModel.isFiltered.collectAsState()
+    val currencyFormatter = NumberFormat.getCurrencyInstance(Locale.US)
 
     LaunchedEffect(initialState, initialOffice, initialYear) {
         viewModel.setInitialFilters(initialState, initialOffice, initialYear)
@@ -88,6 +91,13 @@ fun CandidateListScreen(
                         headlineContent = { Text(candidate.formattedName) },
                         supportingContent = { Text("${candidate.party ?: "Unknown"} - ${candidate.state ?: "N/A"} ${candidate.office ?: ""}") },
                         leadingContent = { Icon(Icons.Default.Person, contentDescription = null) },
+                        trailingContent = {
+                            Text(
+                                text = currencyFormatter.format(candidate.totalContributions ?: 0.0),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        },
                         modifier = Modifier.clickable { onCandidateClick(candidate.id) }
                     )
                     HorizontalDivider()
