@@ -2,18 +2,35 @@ package app.contribs.ui.profile
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import app.contribs.ui.candidates.CandidateItem
 
 @Composable
-fun ProfileScreen() {
+fun ProfileScreen(
+    viewModel: ProfileViewModel = viewModel(),
+    onCandidateClick: (String) -> Unit,
+) {
+    val favorites by viewModel.favoriteCandidates.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.loadFavorites()
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -43,6 +60,8 @@ fun ProfileScreen() {
             style = MaterialTheme.typography.headlineSmall
         )
 
+        Spacer(modifier = Modifier.height(8.dp))
+
         Text(
             text = "Favorites",
             style = MaterialTheme.typography.headlineSmall
@@ -50,5 +69,27 @@ fun ProfileScreen() {
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        if (isLoading) {
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        } else if (favorites.isEmpty()) {
+            Text(
+                text = "No favorites yet.",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                items(favorites) { candidate ->
+                    CandidateItem(
+                        candidate = candidate,
+                        onCandidateClick = onCandidateClick
+                    )
+                }
+            }
+        }
     }
 }

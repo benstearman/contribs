@@ -9,7 +9,7 @@ data class Committee(
     @SerializedName("CMTE_TP") val type: String?,
     @SerializedName("CMTE_PTY_AFFILIATION") val party: String?,
     @SerializedName("TRES_NM") val treasurer: String?,
-    @SerializedName("total_contributions") val totalContributions: Double?
+    @SerializedName("total_contributions") val totalContributions: Double? = 0.0
 
 )
 
