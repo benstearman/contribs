@@ -80,7 +80,7 @@ class Command(BaseCommand):
                         SUB_ID,
                         CAST(NULLIF(trim(TRANSACTION_AMT), '') AS NUMERIC) as amount,
                         TO_DATE(NULLIF(trim(TRANSACTION_DT), ''), 'MMDDYYYY') as receipt_date,
-                        CMTE_ID,
+                        trim(CMTE_ID) as clean_cmte_id,
                         COALESCE(trim(NAME), 'UNKNOWN') as clean_name,
                         COALESCE(SUBSTRING(trim(ZIP_CODE) FROM 1 FOR 9), '') as clean_zip
                     FROM temp_fec_import
@@ -91,10 +91,10 @@ class Command(BaseCommand):
                     t.SUB_ID,
                     t.amount,
                     t.receipt_date,
-                    t.CMTE_ID,
+                    com."CMTE_ID",
                     c.id
                 FROM cleaned_import t
-                JOIN api_committee com ON com."CMTE_ID" = t.CMTE_ID
+                JOIN api_committee com ON com."CMTE_ID" = t.clean_cmte_id
                 JOIN api_contributor c ON c.full_name = t.clean_name AND c.zip_code = t.clean_zip
                 ON CONFLICT (fec_sub_id) DO NOTHING;
             ''')

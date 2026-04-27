@@ -16,14 +16,16 @@ class Command(BaseCommand):
             self.stdout.write("1. Updating Committee totals (Incremental)...")
             cursor.execute('''
                 CREATE TEMP TABLE tmp_cmte_sums AS 
-                SELECT committee_id, SUM(amount) as total FROM api_contribution GROUP BY committee_id;
+                SELECT trim(committee_id) as cmte_id, SUM(amount) as total 
+                FROM api_contribution 
+                GROUP BY 1;
             ''')
-            cursor.execute('CREATE INDEX idx_tmp_cmte ON tmp_cmte_sums(committee_id);')
+            cursor.execute('CREATE INDEX idx_tmp_cmte ON tmp_cmte_sums(cmte_id);')
             cursor.execute('''
                 UPDATE api_committee c 
                 SET total_contributions = t.total 
                 FROM tmp_cmte_sums t 
-                WHERE c."CMTE_ID" = t.committee_id AND c.total_contributions != t.total;
+                WHERE c."CMTE_ID" = t.cmte_id AND c.total_contributions != t.total;
             ''')
             cursor.execute("DROP TABLE tmp_cmte_sums;")
 
@@ -49,12 +51,14 @@ class Command(BaseCommand):
                 SELECT employer_id, SUM(total_contributions) as total FROM api_contributor 
                 WHERE employer_id IS NOT NULL GROUP BY employer_id;
             ''')
+            cursor.execute('CREATE INDEX idx_tmp_emp ON tmp_emp_sums(employer_id);')
             cursor.execute('''
                 UPDATE api_employer e 
                 SET total_contributions = t.total 
                 FROM tmp_emp_sums t 
                 WHERE e.id = t.employer_id AND e.total_contributions != t.total;
             ''')
+            cursor.execute("DROP TABLE tmp_emp_sums;")
 
             # Step 4: Candidates (Uses pre-calculated Committee totals - INSTANT)
             self.stdout.write("4. Cascading totals to Candidates...")
@@ -63,12 +67,14 @@ class Command(BaseCommand):
                 SELECT "CAND_ID_id" as cand_id, SUM(total_contributions) as total FROM api_committee 
                 WHERE "CAND_ID_id" IS NOT NULL GROUP BY "CAND_ID_id";
             ''')
+            cursor.execute('CREATE INDEX idx_tmp_cand ON tmp_cand_sums(cand_id);')
             cursor.execute('''
                 UPDATE api_candidate cand 
                 SET total_contributions = t.total 
                 FROM tmp_cand_sums t 
                 WHERE cand."CAND_ID" = t.cand_id AND cand.total_contributions != t.total;
             ''')
+            cursor.execute("DROP TABLE tmp_cand_sums;")
 
             # Step 5: Finalize
             self.stdout.write("5. Clearing cache...")
