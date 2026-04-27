@@ -42,6 +42,10 @@ class CandidateViewModel : ViewModel() {
     private val _isFiltered = MutableStateFlow(false)
     val isFiltered: StateFlow<Boolean> = _isFiltered.asStateFlow()
 
+    // Expose favorite status
+    private val _isFavorite = MutableStateFlow(false)
+    val isFavorite: StateFlow<Boolean> = _isFavorite.asStateFlow()
+
     init {
         // First load is now handled by setInitialFilters to coordinate with navigation args
     }
@@ -67,6 +71,18 @@ class CandidateViewModel : ViewModel() {
             loadNextPage()
         }
     }
+
+    fun toggleFavorite(candidateId: String, context: android.content.Context) {
+        val manager = app.contribs.data.FavoritesManager(context)
+        manager.toggleFavorite(candidateId)
+        _isFavorite.value = manager.isFavorite(candidateId)
+    }
+
+    fun checkFavoriteStatus(candidateId: String, context: android.content.Context) {
+        val manager = app.contribs.data.FavoritesManager(context)
+        _isFavorite.value = manager.isFavorite(candidateId)
+    }
+
     fun clearFilters() {
         filterState = null
         filterOffice = null

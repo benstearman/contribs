@@ -29,6 +29,9 @@ import coil.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarBorder
+import androidx.compose.ui.platform.LocalContext
 import app.contribs.data.model.getFullCommitteeType
 import androidx.compose.material.icons.filled.AccountBalance
 import app.contribs.ui.theme.partyColor
@@ -40,6 +43,7 @@ fun CandidateDetailScreen(
     viewModel: CandidateViewModel,
     onNavigateBack: () -> Unit
 ) {
+    val context = LocalContext.current
     //committee dialog box details
     var showDialog by remember { mutableStateOf(false) }
     var selectedCommitteeName by remember { mutableStateOf("") }
@@ -49,12 +53,14 @@ fun CandidateDetailScreen(
 
     val candidate by viewModel.selectedCandidate.collectAsState()
     val committees by viewModel.candidateCommittees.collectAsState()
+    val isFavorite by viewModel.isFavorite.collectAsState()
 
     val currencyFormatter = java.text.NumberFormat.getCurrencyInstance(java.util.Locale.US)
 
     LaunchedEffect(candidateId) {
         viewModel.fetchCandidateDetail(candidateId)
         viewModel.fetchCommitteesForCandidate(candidateId)
+        viewModel.checkFavoriteStatus(candidateId, context)
     }
 
     Scaffold(
@@ -66,6 +72,15 @@ fun CandidateDetailScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { viewModel.toggleFavorite(candidateId, context) }) {
+                        Icon(
+                            imageVector = if (isFavorite) Icons.Default.Star else Icons.Default.StarBorder,
+                            contentDescription = "Favorite",
+                            tint = if (isFavorite) Color(0xFFFFD700) else LocalContentColor.current
                         )
                     }
                 }
