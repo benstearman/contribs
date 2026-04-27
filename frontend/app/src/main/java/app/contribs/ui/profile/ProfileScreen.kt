@@ -25,11 +25,11 @@ fun ProfileScreen() {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(150.dp)
-                .background(Color(0xFF4A90E2), shape = RoundedCornerShape(12.dp)),
+                .background(Color(0xFF6AA84F), shape = RoundedCornerShape(12.dp)),
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "CONTRIBS",
+                text = "△ CONTRIBS △",
                 color = Color.White,
                 style = MaterialTheme.typography.titleLarge
             )
@@ -40,6 +40,11 @@ fun ProfileScreen() {
         // greeting
         Text(
             text = "Hello, Anonymous",
+            style = MaterialTheme.typography.headlineSmall
+        )
+
+        Text(
+            text = "Favorites",
             style = MaterialTheme.typography.headlineSmall
         )
 
