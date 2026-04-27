@@ -31,6 +31,9 @@ class ContributionViewModel : ViewModel() {
     private var hasNextPage = true
 
     // Filter state
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery
+
     private val _selectedParty = MutableStateFlow<String?>(null)
     val selectedParty: StateFlow<String?> = _selectedParty
 
@@ -101,9 +104,15 @@ class ContributionViewModel : ViewModel() {
         applyFilters()
     }
 
+    fun setSearchQuery(query: String) {
+        _searchQuery.value = query
+        applyFilters()
+    }
+
     fun clearFilters() {
         _selectedParty.value = null
         _selectedOffice.value = null
+        _searchQuery.value = ""
         applyFilters()
     }
 
@@ -112,7 +121,14 @@ class ContributionViewModel : ViewModel() {
     }
 
     private fun applyFilters() {
-        // Placeholder until we confirm party/office fields at runtime
-        _filteredContributions.value = _contributions.value
+        val query = _searchQuery.value.lowercase()
+        _filteredContributions.value = if (query.isEmpty()) {
+            _contributions.value
+        } else {
+            _contributions.value.filter {
+                it.contributorDetail?.formattedName?.lowercase()?.contains(query) == true ||
+                        it.committeeDetail?.name?.lowercase()?.contains(query) == true
+            }
+        }
     }
 }

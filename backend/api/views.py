@@ -68,6 +68,9 @@ class ContributionViewSet(viewsets.ModelViewSet):
     serializer_class = ContributionSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['contributor__full_name', 'committee__CMTE_NM', 'committee__CAND_ID__CAND_NAME']
+
 class ContributorViewSet(viewsets.ModelViewSet):
     """View and edit contributor profiles."""
     queryset = Contributor.objects.select_related('employer').all().order_by("full_name")
