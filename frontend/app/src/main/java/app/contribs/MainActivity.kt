@@ -131,7 +131,11 @@ fun ContribsApp() {
                 )
             }
             composable(ContribsScreen.Profile.route) {
-                ProfileScreen()
+                ProfileScreen(
+                    onCandidateClick = { candidateId ->
+                        navController.navigate("candidate_detail/$candidateId")
+                    }
+                )
             }
         }
     }

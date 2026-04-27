@@ -29,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import app.contribs.R
+import app.contribs.ui.candidates.CandidateItem
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -44,7 +45,6 @@ fun CandidateListScreen(
     val candidates by viewModel.candidates.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val isFiltered by viewModel.isFiltered.collectAsState()
-    val currencyFormatter = NumberFormat.getCurrencyInstance(Locale.US)
 
     LaunchedEffect(initialState, initialOffice, initialYear) {
         viewModel.setInitialFilters(initialState, initialOffice, initialYear)
@@ -97,31 +97,10 @@ fun CandidateListScreen(
                         }
                     }
 
-                    ListItem(
-                        headlineContent = { Text(candidate.formattedName) },
-                        supportingContent = { Text("${candidate.party ?: "Unknown"} - ${candidate.state ?: "N/A"} ${candidate.office ?: ""}") },
-                        leadingContent = {
-                            AsyncImage(
-                                model = candidate.photoURL,
-                                contentDescription = "Portrait of ${candidate.name}",
-                                fallback = painterResource(R.drawable.default_portrait),
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .clip(CircleShape)
-                                    .background(Color.LightGray),
-                                contentScale = ContentScale.Crop
-                            )
-                        },
-                        trailingContent = {
-                            Text(
-                                text = currencyFormatter.format(candidate.totalContributions ?: 0.0),
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        },
-                        modifier = Modifier.clickable { onCandidateClick(candidate.id) }
+                    CandidateItem(
+                        candidate = candidate,
+                        onCandidateClick = onCandidateClick
                     )
-                    HorizontalDivider()
                 }
             }
         }
