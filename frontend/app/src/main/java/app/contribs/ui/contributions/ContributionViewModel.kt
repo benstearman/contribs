@@ -8,29 +8,26 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
+enum class AmountFilter { ALL, SMALL, MEDIUM, LARGE, XLARGE }
+
 class ContributionViewModel : ViewModel() {
 
     private val api = RetrofitClient.instance
 
-    // Full list from API
     private val _contributions = MutableStateFlow<List<Contribution>>(emptyList())
 
-    // What actually gets displayed (filtered)
     private val _filteredContributions = MutableStateFlow<List<Contribution>>(emptyList())
     val filteredContributions: StateFlow<List<Contribution>> = _filteredContributions
 
-    // Loading/error state
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
 
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error
 
-    // Pagination
     private var currentPage = 1
     private var hasNextPage = true
 
-    // Filter state
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery
 
@@ -39,8 +36,12 @@ class ContributionViewModel : ViewModel() {
 
     private val _selectedOffice = MutableStateFlow<String?>(null)
     val selectedOffice: StateFlow<String?> = _selectedOffice
+
     private val _selectedContribution = MutableStateFlow<Contribution?>(null)
     val selectedContribution: StateFlow<Contribution?> = _selectedContribution
+
+    private val _selectedAmount = MutableStateFlow(AmountFilter.ALL)
+    val selectedAmount: StateFlow<AmountFilter> = _selectedAmount
 
     fun fetchContributionDetail(id: Int) {
         viewModelScope.launch {
@@ -94,6 +95,11 @@ class ContributionViewModel : ViewModel() {
         }
     }
 
+    fun setAmountFilter(filter: AmountFilter) {
+        _selectedAmount.value = if (_selectedAmount.value == filter) AmountFilter.ALL else filter
+        applyFilters()
+    }
+
     fun setPartyFilter(party: String?) {
         _selectedParty.value = if (_selectedParty.value == party) null else party
         applyFilters()
@@ -113,6 +119,7 @@ class ContributionViewModel : ViewModel() {
         _selectedParty.value = null
         _selectedOffice.value = null
         _searchQuery.value = ""
+        _selectedAmount.value = AmountFilter.ALL
         applyFilters()
     }
 
@@ -121,14 +128,24 @@ class ContributionViewModel : ViewModel() {
     }
 
     private fun applyFilters() {
+        var result = _contributions.value
+
         val query = _searchQuery.value.lowercase()
-        _filteredContributions.value = if (query.isEmpty()) {
-            _contributions.value
-        } else {
-            _contributions.value.filter {
+        if (query.isNotEmpty()) {
+            result = result.filter {
                 it.contributorDetail?.formattedName?.lowercase()?.contains(query) == true ||
                         it.committeeDetail?.name?.lowercase()?.contains(query) == true
             }
         }
+
+        result = when (_selectedAmount.value) {
+            AmountFilter.SMALL -> result.filter { (it.amount ?: 0.0) < 500.0 }
+            AmountFilter.MEDIUM -> result.filter { (it.amount ?: 0.0) in 500.0..2000.0 }
+            AmountFilter.LARGE -> result.filter { (it.amount ?: 0.0) in 2000.0..5000.0 }
+            AmountFilter.XLARGE -> result.filter { (it.amount ?: 0.0) > 10000.0 }
+            AmountFilter.ALL -> result
+        }
+
+        _filteredContributions.value = result
     }
 }

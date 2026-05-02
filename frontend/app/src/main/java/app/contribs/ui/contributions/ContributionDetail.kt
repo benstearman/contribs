@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import app.contribs.data.model.getFullCommitteeType
 import java.text.NumberFormat
 import java.util.Locale
+import app.contribs.data.model.formatCandName
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,7 +66,7 @@ fun ContributionDetail(
                     .verticalScroll(rememberScrollState())
             ) {
 
-                // contribution stuff / card
+                // contribution info card
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -163,7 +164,7 @@ fun ContributionDetail(
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
                                 Text(
-                                    text = candidateName,
+                                    text = formatCandName(candidateName),
                                     fontWeight = FontWeight.Medium,
                                     color = MaterialTheme.colorScheme.primary
                                 )

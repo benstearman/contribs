@@ -35,6 +35,7 @@ import androidx.compose.ui.platform.LocalContext
 import app.contribs.data.model.getFullCommitteeType
 import androidx.compose.material.icons.filled.AccountBalance
 import app.contribs.ui.theme.partyColor
+import androidx.compose.ui.graphics.Brush
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -104,7 +105,15 @@ fun CandidateDetailScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(bgColor)
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    bgColor,
+                                    bgColor.copy(alpha = 0.6f),
+                                    MaterialTheme.colorScheme.background
+                                )
+                            )
+                        )
                         .padding(vertical = 32.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -118,7 +127,6 @@ fun CandidateDetailScreen(
                             .background(Color.White),
                         contentScale = ContentScale.Crop
                     )
-
                 }
 
                 Column(

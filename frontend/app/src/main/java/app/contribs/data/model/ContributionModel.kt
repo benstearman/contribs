@@ -60,3 +60,28 @@ data class Contribution(
     @SerializedName("committee_detail") val committeeDetail: CommitteeDetail?,
     @SerializedName("fec_sub_id") val fecSubId: String?
 )
+
+fun formatCandName(raw: String?): String {
+    if (raw == null) return "Unknown"
+    val prefixes = listOf("MR", "MR.", "MRS", "MRS.", "MS", "MS.", "DR", "DR.", "HON", "HON.", "REV", "REV.")
+    val suffixes = listOf("JR", "JR.", "SR", "SR.", "II", "III", "MD", "M.D.", "PHD", "PHD.")
+    val parts = raw.split(",", limit = 2)
+    val lastNameString = parts[0]
+    val restOfTheName = if (parts.size > 1) parts[1].replace(",", " ") else ""
+    val allWords = (restOfTheName + " " + lastNameString).split(" ")
+    val finalNames = mutableListOf<String>()
+    var foundSuffix = ""
+    for (word in allWords) {
+        val cleanWord = word.trim()
+        if (cleanWord.isEmpty()) continue
+        val upperWord = cleanWord.uppercase()
+        if (prefixes.contains(upperWord)) {
+        } else if (suffixes.contains(upperWord)) {
+            foundSuffix = upperWord
+        } else {
+            finalNames.add(cleanWord.lowercase().replaceFirstChar { it.uppercase() })
+        }
+    }
+    if (foundSuffix.isNotEmpty()) finalNames.add(foundSuffix)
+    return finalNames.joinToString(" ")
+}
