@@ -9,3 +9,4 @@ theme:
     accent: indigo
 nav:
   - Home: index.md
+  - User Guide: user-guide.md
