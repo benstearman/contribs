@@ -42,7 +42,10 @@ interface ContribsApiService {
     suspend fun getCommitteeDetail(@Path("id") id: String): Committee
 
     @GET("contributions/")
-    suspend fun getContributions(@Query("page") page: Int = 1): PaginatedResponse<Contribution>
+    suspend fun getContributions(
+        @Query("page") page: Int = 1,
+        @Query("search") search: String? = null
+    ): PaginatedResponse<Contribution>
 
     @GET("contributions/{id}/")
     suspend fun getContributionDetail(@Path("id") id: String): Contribution

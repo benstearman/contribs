@@ -60,7 +60,7 @@ class ContributionViewModel : ViewModel() {
     }
 
     fun fetchContributions(loadMore: Boolean = false) {
-        if (_isLoading.value || !hasNextPage) return
+        if (_isLoading.value || (!hasNextPage && loadMore)) return
 
         viewModelScope.launch {
             _isLoading.value = true
@@ -70,9 +70,13 @@ class ContributionViewModel : ViewModel() {
                 if (!loadMore) {
                     currentPage = 1
                     hasNextPage = true
+                    _contributions.value = emptyList() // Clear for fresh search
                 }
 
-                val response = api.getContributions(page = currentPage)
+                val response = api.getContributions(
+                    page = currentPage,
+                    search = _searchQuery.value.takeIf { it.isNotEmpty() }
+                )
 
                 val updated = if (loadMore) {
                     _contributions.value + response.results
@@ -112,7 +116,7 @@ class ContributionViewModel : ViewModel() {
 
     fun setSearchQuery(query: String) {
         _searchQuery.value = query
-        applyFilters()
+        fetchContributions(loadMore = false)
     }
 
     fun clearFilters() {
@@ -146,6 +150,6 @@ class ContributionViewModel : ViewModel() {
             AmountFilter.ALL -> result
         }
 
-        _filteredContributions.value = result
+       _filteredContributions.value = _contributions.value
     }
 }
