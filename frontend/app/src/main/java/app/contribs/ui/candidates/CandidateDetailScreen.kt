@@ -29,8 +29,13 @@ import coil.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarBorder
+import androidx.compose.ui.platform.LocalContext
 import app.contribs.data.model.getFullCommitteeType
 import androidx.compose.material.icons.filled.AccountBalance
+import app.contribs.ui.theme.partyColor
+import androidx.compose.ui.graphics.Brush
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,18 +44,24 @@ fun CandidateDetailScreen(
     viewModel: CandidateViewModel,
     onNavigateBack: () -> Unit
 ) {
+    val context = LocalContext.current
     //committee dialog box details
     var showDialog by remember { mutableStateOf(false) }
     var selectedCommitteeName by remember { mutableStateOf("") }
     var selectedCommitteeTres by remember { mutableStateOf("") }
     var selectedCommitteeType by remember { mutableStateOf("") }
+    var selectedCommitteeTotal by remember { mutableStateOf(0.0) }
 
     val candidate by viewModel.selectedCandidate.collectAsState()
     val committees by viewModel.candidateCommittees.collectAsState()
+    val isFavorite by viewModel.isFavorite.collectAsState()
+
+    val currencyFormatter = java.text.NumberFormat.getCurrencyInstance(java.util.Locale.US)
 
     LaunchedEffect(candidateId) {
         viewModel.fetchCandidateDetail(candidateId)
         viewModel.fetchCommitteesForCandidate(candidateId)
+        viewModel.checkFavoriteStatus(candidateId, context)
     }
 
     Scaffold(
@@ -62,6 +73,15 @@ fun CandidateDetailScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back"
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { viewModel.toggleFavorite(candidateId, context) }) {
+                        Icon(
+                            imageVector = if (isFavorite) Icons.Default.Star else Icons.Default.StarBorder,
+                            contentDescription = "Favorite",
+                            tint = if (isFavorite) Color(0xFFFFD700) else LocalContentColor.current
                         )
                     }
                 }
@@ -85,7 +105,15 @@ fun CandidateDetailScreen(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(bgColor)
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    bgColor,
+                                    bgColor.copy(alpha = 0.6f),
+                                    MaterialTheme.colorScheme.background
+                                )
+                            )
+                        )
                         .padding(vertical = 32.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -99,7 +127,6 @@ fun CandidateDetailScreen(
                             .background(Color.White),
                         contentScale = ContentScale.Crop
                     )
-
                 }
 
                 Column(
@@ -174,7 +201,7 @@ fun CandidateDetailScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 8.dp)
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
                 )
                 {
                     Column(modifier = Modifier.padding(16.dp)) {
@@ -198,7 +225,7 @@ fun CandidateDetailScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 8.dp)
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
 
@@ -217,7 +244,7 @@ fun CandidateDetailScreen(
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Text("Total Received This Cycle")
-                            Text("$${candidateVal.totalContributions ?: 0.00}")
+                            Text(currencyFormatter.format(candidateVal.totalContributions ?: 0.00))
                         }
 
                         Spacer(modifier = Modifier.height(8.dp))
@@ -237,7 +264,7 @@ fun CandidateDetailScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 8.dp)
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
                 )
                 {
                     Column(modifier = Modifier.padding(10.dp)) {
@@ -260,7 +287,7 @@ fun CandidateDetailScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 8.dp)
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
@@ -282,6 +309,7 @@ fun CandidateDetailScreen(
                                                 committee.name ?: "Unnamed Committee"
                                             selectedCommitteeType = committee.type ?: "Unknown"
                                             selectedCommitteeTres = committee.treasurer ?: "Unknown"
+                                            selectedCommitteeTotal = committee.totalContributions ?: 0.0
 
                                             showDialog = true
                                         }
@@ -359,13 +387,13 @@ fun CandidateDetailScreen(
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        Text( //we can implement this later... just a placeholder/idea
+                        Text( 
                             "TOTAL MONEY RAISED:",
                             style = MaterialTheme.typography.labelMedium,
                             color = Color.Gray
                         )
                         Text(
-                            text = "coming soon...",
+                            text = currencyFormatter.format(selectedCommitteeTotal),
                             style = MaterialTheme.typography.bodyLarge
                         )
                     }
@@ -380,12 +408,4 @@ fun CandidateDetailScreen(
     }
 }
 
-//function for making the candidate detail page bg color change according to party
-private fun partyColor(party: String?): Color {
-    return when (party) {
-        "DEM" -> Color(0xFF1141B9)
-        "REP" -> Color(0xFFAF0E0E)
-        "GRE", "IGR", "DGR", "DCG", "PG" -> Color(0xFF5BAF47) //"green" parties
-        else -> Color(0xFFD3D3D3)
-    }
-}
+

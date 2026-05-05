@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.postgres.indexes import GinIndex
 
 class Party(models.Model):
     id = models.CharField(primary_key=True, max_length=3) # FEC uses 3-letter codes
@@ -24,7 +25,10 @@ class Candidate(models.Model):
     
     class Meta:
         db_table = "api_candidate"
-        indexes = [models.Index(fields=['CAND_NAME', 'CAND_ELECTION_YR'])]
+        indexes = [
+            models.Index(fields=['CAND_NAME', 'CAND_ELECTION_YR']),
+            GinIndex(fields=['CAND_NAME'], name='candidate_name_trgm_idx', opclasses=['gin_trgm_ops']),
+        ]
 
     def __str__(self):
         return f"{self.CAND_NAME} ({self.CAND_ID})"
@@ -38,14 +42,20 @@ class Committee(models.Model):
     CMTE_DSGN = models.CharField("Designation", max_length=1, null=True, blank=True)
     CAND_ID = models.ForeignKey(Candidate, on_delete=models.SET_NULL, null=True, blank=True, related_name='committees')
 
+    total_contributions = models.DecimalField("Total Contributions", max_digits=14, decimal_places=2, default=0.00)
+
     class Meta:
         db_table = "api_committee"
+        indexes = [
+            GinIndex(fields=['CMTE_NM'], name='committee_name_trgm_idx', opclasses=['gin_trgm_ops']),
+        ]
 
     def __str__(self):
         return self.CMTE_NM or self.CMTE_ID
 
 class Employer(models.Model):
     name = models.CharField(max_length=200, unique=True, db_index=True)
+    total_contributions = models.DecimalField("Total Contributions", max_digits=14, decimal_places=2, default=0.00)
 
     def __str__(self):
         return self.name
@@ -54,23 +64,30 @@ class Contributor(models.Model):
     full_name = models.CharField(max_length=200, db_index=True)
     zip_code = models.CharField(max_length=10, db_index=True)
     employer = models.ForeignKey(Employer, on_delete=models.SET_NULL, null=True, blank=True)
+    total_contributions = models.DecimalField("Total Contributions", max_digits=14, decimal_places=2, default=0.00)
 
     class Meta:
-        # Prevents duplicate contributors during import
         unique_together = ('full_name', 'zip_code')
+        indexes = [
+            GinIndex(fields=['full_name'], name='contributor_name_trgm_idx', opclasses=['gin_trgm_ops']),
+        ]
 
     def __str__(self):
         return self.full_name
 
 class Contribution(models.Model):
-    contributor = models.ForeignKey(Contributor, on_delete=models.CASCADE, related_name='contributions')
-    committee = models.ForeignKey(Committee, on_delete=models.CASCADE, related_name='contributions')
-    amount = models.DecimalField(max_digits=14, decimal_places=2)
+    contributor = models.ForeignKey(Contributor, on_delete=models.CASCADE, related_name='contributions', db_index=True)
+    committee = models.ForeignKey(Committee, on_delete=models.CASCADE, related_name='contributions', db_index=True)
+    amount = models.DecimalField(max_digits=14, decimal_places=2, db_index=True)
     receipt_date = models.DateField(db_index=True)
     fec_sub_id = models.BigIntegerField(unique=True, null=True, help_text="Original FEC SUB_ID")
 
     class Meta:
         ordering = ['-receipt_date']
+        indexes = [
+            models.Index(fields=['contributor', 'committee']),
+            models.Index(fields=['receipt_date', 'amount']),
+        ]
 
 class FECContribution(models.Model):
     CMTE_ID = models.CharField(

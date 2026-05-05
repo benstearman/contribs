@@ -19,5 +19,8 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 # Copy the current directory contents into the container at /app
 COPY . /app/
 
+# Create the cache directory inside the container and set permissions
+RUN mkdir -p /app/django_cache && chmod 777 /app/django_cache
+
 # Expose the port
 EXPOSE 8000

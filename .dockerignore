@@ -1,0 +1,12 @@
+# .dockerignore
+.git
+.idea
+venv
+backend/django_cache
+frontend
+docs
+media
+static_collected
+*.pyc
+__pycache__
+.env

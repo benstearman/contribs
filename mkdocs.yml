@@ -1,0 +1,12 @@
+site_name: Contribs.app
+site_description: An open-source legislative contribution tracker.
+docs_dir: landing
+theme:
+  name: material
+  palette:
+    scheme: default
+    primary: indigo
+    accent: indigo
+nav:
+  - Home: index.md
+  - User Guide: user-guide.md

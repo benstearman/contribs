@@ -35,6 +35,8 @@ secret_key.py # If stored separately
 .tox/
 .eggs/
 
-# Gemini CLI
-GEMINI.md
-GEMINI.MD
+# Documentation
+docs/
+
+# Django cache
+backend/django_cache/

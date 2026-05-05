@@ -20,13 +20,28 @@ class PartyViewSet(viewsets.ReadOnlyModelViewSet):
 
 class CandidateViewSet(viewsets.ModelViewSet):
     """View and edit candidate details."""
-    # select_related avoids extra queries for the party name
-    queryset = Candidate.objects.select_related('CAND_PTY_AFFILIATION').all().order_by("CAND_NAME")
     serializer_class = CandidateSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     filter_backends = [filters.SearchFilter]
     search_fields = ['CAND_NAME']
+
+    def get_queryset(self):
+        queryset = Candidate.objects.select_related('CAND_PTY_AFFILIATION').all().order_by("-total_contributions", "CAND_NAME")
+        
+        # Manual filtering for Election list navigation
+        state = self.request.query_params.get('state')
+        office = self.request.query_params.get('office')
+        year = self.request.query_params.get('year')
+        
+        if state:
+            queryset = queryset.filter(CAND_OFFICE_ST=state)
+        if office:
+            queryset = queryset.filter(CAND_OFFICE=office)
+        if year:
+            queryset = queryset.filter(CAND_ELECTION_YR=year)
+            
+        return queryset
 
     @action(detail=True, methods=['get'])
     def committees(self, request, pk=None):
@@ -53,6 +68,9 @@ class ContributionViewSet(viewsets.ModelViewSet):
     serializer_class = ContributionSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['contributor__full_name', 'committee__CMTE_NM', 'committee__CAND_ID__CAND_NAME']
+
 class ContributorViewSet(viewsets.ModelViewSet):
     """View and edit contributor profiles."""
     queryset = Contributor.objects.select_related('employer').all().order_by("full_name")
@@ -69,16 +87,64 @@ class ElectionSummaryView(APIView):
     @method_decorator(cache_page(60*60*24))
     def get(self, request):
         # Top 10 Employers by total donation amount
-        top_employers = Employer.objects.annotate(
-            total_amount=Sum('contributor__contributions__amount')
-        ).exclude(name='').exclude(total_amount__isnull=True).order_by('-total_amount')[:10]
+        top_employers = Employer.objects.exclude(name='').order_by('-total_contributions')[:10]
         
         # Top 10 Individual Contributors by total donation amount
-        top_contributors = Contributor.objects.annotate(
-            total_amount=Sum('contributions__amount')
-        ).exclude(full_name='UNKNOWN').exclude(total_amount__isnull=True).order_by('-total_amount')[:10]
+        top_contributors = Contributor.objects.exclude(full_name='UNKNOWN').order_by('-total_contributions')[:10]
         
         return Response({
-            "top_employers": [{"name": e.name, "total": e.total_amount} for e in top_employers],
-            "top_contributors": [{"name": c.full_name, "total": c.total_amount} for c in top_contributors]
+            "top_employers": [{"name": e.name, "total": float(e.total_contributions)} for e in top_employers],
+            "top_contributors": [{"name": c.full_name, "total": float(c.total_contributions)} for c in top_contributors]
+        })
+
+class ElectionListView(APIView):
+    """Returns a list of unique elections (year, state, office) filtered by query params, with total contributions."""
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get(self, request):
+        state = request.query_params.get('state')
+        office = request.query_params.get('office')
+        
+        # Group by year, state, office and sum candidate totals
+        queryset = Candidate.objects.values(
+            'CAND_ELECTION_YR', 
+            'CAND_OFFICE_ST', 
+            'CAND_OFFICE'
+        ).annotate(
+            total_amount=Sum('total_contributions')
+        ).order_by('-CAND_ELECTION_YR', 'CAND_OFFICE_ST', 'CAND_OFFICE')
+
+        if state:
+            queryset = queryset.filter(CAND_OFFICE_ST=state)
+        if office:
+            queryset = queryset.filter(CAND_OFFICE=office)
+
+        results = [
+            {
+                "year": item['CAND_ELECTION_YR'],
+                "state": item['CAND_OFFICE_ST'],
+                "office": item['CAND_OFFICE'],
+                "total_amount": float(item['total_amount'] or 0.0)
+            } for item in queryset
+        ]
+        
+        return Response(results)
+
+class CandidateFiltersView(APIView):
+    """Returns unique states and offices available in the database."""
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get(self, request):
+        states = Candidate.objects.exclude(CAND_OFFICE_ST__isnull=True).exclude(CAND_OFFICE_ST='').values_list('CAND_OFFICE_ST', flat=True).distinct().order_by('CAND_OFFICE_ST')
+        
+        # Hardcoded based on model choices
+        offices = [
+            {"id": "H", "name": "House"},
+            {"id": "S", "name": "Senate"},
+            {"id": "P", "name": "President"}
+        ]
+        
+        return Response({
+            "states": list(states),
+            "offices": offices
         })

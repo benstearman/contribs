@@ -7,8 +7,6 @@ services:
     volumes:
       - ./backend:/app
       - ./data:/app/data
-    ports:
-      - "8000:8000"
     environment:
       - DB_NAME=${POSTGRES_DB}
       - DB_USER=${POSTGRES_USER}
@@ -21,37 +19,22 @@ services:
     depends_on:
       - db
 
-  # --- 2. Caddy Reverse Proxy ---
-  caddy:
-    build:
-      context: .
-      dockerfile: Dockerfile.caddy
-    container_name: contribs_caddy
-    restart: always
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
-      - caddy_data:/data
-    environment:
-      - CADDY_DOMAIN=${CADDY_DOMAIN}
-      - CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN}
-    depends_on:
-      - web
-      - wiki
-      - vaultwarden
-
   # --- 3. Database (PostgreSQL) ---
   db:
     image: postgres:15-alpine
     container_name: contribs_db
+    shm_size: '256mb'
     environment:
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data/
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   # --- 4. Portainer (Management) ---
   portainer:
@@ -60,8 +43,6 @@ services:
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
-    ports:
-      - "9000:9000"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer_data:/data
@@ -76,31 +57,18 @@ services:
       - PGADMIN_DEFAULT_PASSWORD=${POSTGRES_PASSWORD}
       - PGADMIN_CONFIG_SERVER_MODE=False
       - PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED=False
-    ports:
-      - "5050:80"
     volumes:
       - pgadmin_data:/var/lib/pgadmin
     depends_on:
       - db
 
-  # --- 6. Wiki.js (Documentation) ---
+  # --- 6. MkDocs (Landing Page) ---
   wiki:
-    image: ghcr.io/requarks/wiki:2
+    image: squidfunk/mkdocs-material
     container_name: contribs_wiki
     restart: unless-stopped
-    environment:
-      - DB_TYPE=postgres
-      - DB_HOST=db
-      - DB_PORT=5432
-      - DB_USER=${POSTGRES_USER}
-      - DB_PASS=${POSTGRES_PASSWORD}
-      - DB_NAME=wiki
-    ports:
-      - "3000:3000"
     volumes:
-      - wiki_data:/wiki
-    depends_on:
-      - db
+      - ./:/docs
 
   # --- 7. Vaultwarden (Passwords) ---
   vaultwarden:
@@ -115,10 +83,19 @@ services:
     depends_on:
       - db
 
+  # --- 8. Cloudflare Tunnel ---
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: contribs_tunnel
+    restart: always
+    command: tunnel run
+    env_file: .env
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+
 volumes:
   postgres_data:
-  caddy_data:
   portainer_data:
-  pgadmin_data:
   wiki_data:
   vaultwarden_data:
+  pgadmin_data:

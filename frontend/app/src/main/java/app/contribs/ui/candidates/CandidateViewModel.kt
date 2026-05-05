@@ -9,6 +9,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 class CandidateViewModel : ViewModel() {
@@ -32,8 +33,66 @@ class CandidateViewModel : ViewModel() {
 
     private var searchJob: Job? = null
 
+    private var filterState: String? = null
+    private var filterOffice: String? = null
+    private var filterYear: Int? = null
+    private var isFirstLoad = true
+
+    // Expose whether any filters are active
+    private val _isFiltered = MutableStateFlow(false)
+    val isFiltered: StateFlow<Boolean> = _isFiltered.asStateFlow()
+
+    // Expose favorite status
+    private val _isFavorite = MutableStateFlow(false)
+    val isFavorite: StateFlow<Boolean> = _isFavorite.asStateFlow()
+
     init {
-        loadNextPage() // Fetch the first page when the screen opens
+        // First load is now handled by setInitialFilters to coordinate with navigation args
+    }
+
+    private fun sanitize(value: String?): String? {
+        return value?.takeIf { it.isNotEmpty() && !it.startsWith("{") }
+    }
+
+    fun setInitialFilters(state: String?, office: String?, year: Int?) {
+        val sState = sanitize(state)
+        val sOffice = sanitize(office)
+        val sYear = year?.takeIf { it != 0 }
+
+        if (isFirstLoad || filterState != sState || filterOffice != sOffice || filterYear != sYear) {
+            isFirstLoad = false
+            filterState = sState
+            filterOffice = sOffice
+            filterYear = sYear
+            _isFiltered.value = filterState != null || filterOffice != null || filterYear != null
+            currentPage = 1
+            isLastPage = false
+            _candidates.value = emptyList()
+            loadNextPage()
+        }
+    }
+
+    fun toggleFavorite(candidateId: String, context: android.content.Context) {
+        val manager = app.contribs.data.FavoritesManager(context)
+        manager.toggleFavorite(candidateId)
+        _isFavorite.value = manager.isFavorite(candidateId)
+    }
+
+    fun checkFavoriteStatus(candidateId: String, context: android.content.Context) {
+        val manager = app.contribs.data.FavoritesManager(context)
+        _isFavorite.value = manager.isFavorite(candidateId)
+    }
+
+    fun clearFilters() {
+        filterState = null
+        filterOffice = null
+        filterYear = null
+        _searchQuery.value = ""
+        _isFiltered.value = false
+        currentPage = 1
+        isLastPage = false
+        _candidates.value = emptyList()
+        loadNextPage()
     }
 
     fun onSearchQueryChange(newQuery: String) {
@@ -54,10 +113,13 @@ class CandidateViewModel : ViewModel() {
         isLoading = true
         viewModelScope.launch {
             try {
-                // Fetch the specific page with search query
+                // Fetch the specific page with search query and filters
                 val response = RetrofitClient.instance.getCandidates(
                     page = currentPage,
-                    search = _searchQuery.value.ifBlank { null }
+                    search = _searchQuery.value.ifBlank { null },
+                    state = filterState,
+                    office = filterOffice,
+                    year = filterYear
                 )
 
                 // If it's the first page, replace results. Otherwise, append.

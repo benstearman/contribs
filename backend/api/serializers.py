@@ -73,10 +73,12 @@ class CommitteeSerializer(serializers.ModelSerializer):
     """Details the committee and the candidate they support."""
     candidate_name = serializers.CharField(source="CAND_ID.CAND_NAME", read_only=True)
 
+    total_contributions = serializers.FloatField(read_only=True)
+
     class Meta:
         model = Committee
-        fields = ["CMTE_ID", "CMTE_NM", "CMTE_TP", "candidate_name", "TRES_NM"]
-
+        fields = ["CMTE_ID", "CMTE_NM", "CMTE_TP", "candidate_name", "CAND_ID", "TRES_NM", "total_contributions"]
+        
 class EmployerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employer

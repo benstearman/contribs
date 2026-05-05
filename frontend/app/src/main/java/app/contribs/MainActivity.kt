@@ -13,10 +13,12 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import app.contribs.data.model.ElectionSummary
 
 // Feature Screen Imports
@@ -32,6 +34,9 @@ import app.contribs.ui.profile.ProfileScreen
 import app.contribs.ui.navigation.ContribsScreen
 import app.contribs.ui.navigation.bottomNavItems
 import app.contribs.ui.theme.ContribsTheme
+
+import app.contribs.ui.contributions.ContributionViewModel
+import app.contribs.ui.contributions.ContributionDetail
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,15 +62,33 @@ fun ContribsApp() {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(ContribsScreen.Elections.route) {
-                ElectionScreen()
+                ElectionScreen(
+                    onElectionClick = { state, office, year ->
+                        navController.navigate(ContribsScreen.Candidates.createRoute(state, office, year))
+                    }
+                )
             }
             // --- Candidates Flow ---
-            composable(ContribsScreen.Candidates.route) {
+            composable(
+                route = ContribsScreen.Candidates.route,
+                arguments = listOf(
+                    navArgument("state") { type = NavType.StringType; nullable = true; defaultValue = null },
+                    navArgument("office") { type = NavType.StringType; nullable = true; defaultValue = null },
+                    navArgument("year") { type = NavType.IntType; defaultValue = 0 }
+                )
+            ) { backStackEntry ->
+                val state = backStackEntry.arguments?.getString("state")
+                val office = backStackEntry.arguments?.getString("office")
+                val year = backStackEntry.arguments?.getInt("year")?.takeIf { it != 0 }
+                
                 // Scoped ViewModel so the list and detail screen share the same data
                 val sharedViewModel: CandidateViewModel = viewModel()
 
                 CandidateListScreen(
                     viewModel = sharedViewModel,
+                    initialState = state,
+                    initialOffice = office,
+                    initialYear = year,
                     onCandidateClick = { candidateId ->
                         navController.navigate("candidate_detail/$candidateId")
                     }
@@ -86,10 +109,33 @@ fun ContribsApp() {
             // --- Other Tabs ---
 
             composable(ContribsScreen.Contributions.route) {
-                ContributionListScreen()
+                val sharedViewModel: ContributionViewModel = viewModel()
+                ContributionListScreen(
+                    viewModel = sharedViewModel,
+                    onContributionClick = { contributionId ->
+                        navController.navigate("contribution_detail/$contributionId")
+                    }
+                )
+            }
+            composable("contribution_detail/{contributionId}") { backStackEntry ->
+                val sharedViewModel: ContributionViewModel = viewModel()
+                val contributionId =
+                    backStackEntry.arguments?.getString("contributionId")?.toIntOrNull() ?: 0
+                ContributionDetail(
+                    contributionId = contributionId,
+                    viewModel = sharedViewModel,
+                    onNavigateBack = { navController.popBackStack() },
+                    onCandidateClick = { candidateId ->
+                        navController.navigate("candidate_detail/$candidateId")
+                    }
+                )
             }
             composable(ContribsScreen.Profile.route) {
-                ProfileScreen()
+                ProfileScreen(
+                    onCandidateClick = { candidateId ->
+                        navController.navigate("candidate_detail/$candidateId")
+                    }
+                )
             }
         }
     }
@@ -102,23 +148,19 @@ fun ContribsBottomNavigation(navController: NavHostController) {
         val currentDestination = navBackStackEntry?.destination
 
         bottomNavItems.forEach { screen ->
+            val baseRoute = screen.route.substringBefore("?")
             NavigationBarItem(
                 icon = { Icon(screen.icon, contentDescription = null) },
                 label = { Text(screen.label) },
-                selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
+                selected = currentDestination?.hierarchy?.any { it.route?.substringBefore("?") == baseRoute } == true,
                 onClick = {
-                    navController.navigate(screen.route) {
-                        // Pop up to the start destination of the graph to
-                        // avoid building up a large stack of destinations
-                        // on the back stack as users select items
+                    val isStartDestination = screen == ContribsScreen.Elections
+                    navController.navigate(baseRoute) {
                         popUpTo(navController.graph.findStartDestination().id) {
-                            saveState = true
+                            saveState = !isStartDestination
                         }
-                        // Avoid multiple copies of the same destination when
-                        // reselecting the same item
                         launchSingleTop = true
-                        // Restore state when reselecting a previously selected item
-                        restoreState = true
+                        restoreState = !isStartDestination
                     }
                 }
             )
