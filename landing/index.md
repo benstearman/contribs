@@ -24,7 +24,7 @@
 
 Download our latest prototype and start exploring the data today.
 
-[Download the Android APK (Debug)](contribs-debug.apk)
+[Download the Android APK](contribs-debug.apk)
 
 ---
 
