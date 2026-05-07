@@ -33,6 +33,7 @@ class ElectionViewModel : ViewModel() {
     init {
         fetchSummary()
         fetchFilters()
+        fetchElections()
     }
 
     fun onStateChange(state: String) {
@@ -69,11 +70,6 @@ class ElectionViewModel : ViewModel() {
     }
 
     private fun fetchElections() {
-        if (_selectedState.value.isEmpty() && _selectedOffice.value.isEmpty()) {
-            _elections.value = emptyList()
-            return
-        }
-
         viewModelScope.launch {
             try {
                 _isLoading.value = true
