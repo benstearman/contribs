@@ -73,14 +73,14 @@ class CandidateViewSet(viewsets.ModelViewSet):
             "top_individuals": [
                 {
                     "name": item['contributor__full_name'], 
-                    "total": float(item['total']),
+                    "total": float(item['total'] or 0.0),
                     "employer_name": item['contributor__employer__name']
                 } for item in top_individuals
             ],
             "top_employers": [
                 {
                     "name": item['contributor__employer__name'], 
-                    "total": float(item['total'])
+                    "total": float(item['total'] or 0.0)
                 } for item in top_employers
             ]
         })
@@ -147,7 +147,7 @@ class ElectionListView(APIView):
             'CAND_OFFICE'
         ).annotate(
             total_amount=Sum('total_contributions')
-        ).order_by('-CAND_ELECTION_YR', 'CAND_OFFICE_ST', 'CAND_OFFICE')
+        ).order_by('-total_amount')
 
         if state:
             queryset = queryset.filter(CAND_OFFICE_ST=state)
