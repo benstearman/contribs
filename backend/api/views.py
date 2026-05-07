@@ -49,6 +49,41 @@ class CandidateViewSet(viewsets.ModelViewSet):
         committees = candidate.committees.all() # Grabs their committees
         serializer = CommitteeSerializer(committees, many=True)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['get'])
+    def top_contributors(self, request, pk=None):
+        candidate = self.get_object()
+        committees = candidate.committees.all()
+        
+        # Aggregate top individuals
+        top_individuals = Contribution.objects.filter(committee__in=committees) \
+            .values('contributor__full_name', 'contributor__employer__name') \
+            .annotate(total=Sum('amount')) \
+            .order_by('-total')[:10]
+        
+        # Aggregate top employers
+        top_employers = Contribution.objects.filter(committee__in=committees) \
+            .values('contributor__employer__name') \
+            .exclude(contributor__employer__name__isnull=True) \
+            .exclude(contributor__employer__name='') \
+            .annotate(total=Sum('amount')) \
+            .order_by('-total')[:10]
+            
+        return Response({
+            "top_individuals": [
+                {
+                    "name": item['contributor__full_name'], 
+                    "total": float(item['total']),
+                    "employer_name": item['contributor__employer__name']
+                } for item in top_individuals
+            ],
+            "top_employers": [
+                {
+                    "name": item['contributor__employer__name'], 
+                    "total": float(item['total'])
+                } for item in top_employers
+            ]
+        })
     
 class CommitteeViewSet(viewsets.ModelViewSet):
     """View and edit committee details."""

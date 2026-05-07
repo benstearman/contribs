@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import app.contribs.data.api.RetrofitClient
 import app.contribs.data.model.Candidate
 import app.contribs.data.model.Committee
+import app.contribs.data.model.TopContributorsResponse
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,6 +31,9 @@ class CandidateViewModel : ViewModel() {
 
     private val _candidateCommittees = MutableStateFlow<List<Committee>>(emptyList())
     val candidateCommittees: StateFlow<List<Committee>> = _candidateCommittees
+
+    private val _topContributors = MutableStateFlow<TopContributorsResponse?>(null)
+    val topContributors: StateFlow<TopContributorsResponse?> = _topContributors.asStateFlow()
 
     private var searchJob: Job? = null
 
@@ -159,6 +163,17 @@ class CandidateViewModel : ViewModel() {
             try {
                 val response = RetrofitClient.instance.getCandidateCommittees(candidateId)
                 _candidateCommittees.value = response
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun fetchTopContributors(candidateId: String) {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitClient.instance.getTopContributors(candidateId)
+                _topContributors.value = response
             } catch (e: Exception) {
                 e.printStackTrace()
             }

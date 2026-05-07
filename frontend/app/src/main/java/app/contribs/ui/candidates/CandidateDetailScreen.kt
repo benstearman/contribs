@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.*
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.background
@@ -54,13 +55,17 @@ fun CandidateDetailScreen(
 
     val candidate by viewModel.selectedCandidate.collectAsState()
     val committees by viewModel.candidateCommittees.collectAsState()
+    val topContributors by viewModel.topContributors.collectAsState()
     val isFavorite by viewModel.isFavorite.collectAsState()
+
+    var selectedTabIndex by remember { mutableIntStateOf(0) } // 0 for Individuals, 1 for Employers
 
     val currencyFormatter = java.text.NumberFormat.getCurrencyInstance(java.util.Locale.US)
 
     LaunchedEffect(candidateId) {
         viewModel.fetchCandidateDetail(candidateId)
         viewModel.fetchCommitteesForCandidate(candidateId)
+        viewModel.fetchTopContributors(candidateId)
         viewModel.checkFavoriteStatus(candidateId, context)
     }
 
@@ -267,21 +272,65 @@ fun CandidateDetailScreen(
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                 )
                 {
-                    Column(modifier = Modifier.padding(10.dp)) {
+                    Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = "Candidate's Top Contributors",
+                            text = "Top Contributors",
                             style = MaterialTheme.typography.titleMedium
                         )
-
                         HorizontalDivider()
+                        Spacer(modifier = Modifier.height(12.dp))
 
-                        Spacer(modifier = Modifier.height(10.dp))
+                        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                            SegmentedButton(
+                                selected = selectedTabIndex == 0,
+                                onClick = { selectedTabIndex = 0 },
+                                shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
+                            ) {
+                                Text("Individuals")
+                            }
+                            SegmentedButton(
+                                selected = selectedTabIndex == 1,
+                                onClick = { selectedTabIndex = 1 },
+                                shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
+                            ) {
+                                Text("Employers")
+                            }
+                        }
 
-                        Text("coming soon...")
+                        Spacer(modifier = Modifier.height(16.dp))
 
+                        val listToShow = if (selectedTabIndex == 0) {
+                            topContributors?.topIndividuals?.map { it.name to it.total }
+                        } else {
+                            topContributors?.topEmployers?.map { it.name to it.total }
+                        } ?: emptyList()
+
+                        if (listToShow.isNotEmpty()) {
+                            listToShow.forEach { (name, total) ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 4.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(name, modifier = Modifier.weight(1f))
+                                    Text(
+                                        currencyFormatter.format(total),
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+                        } else if (topContributors == null) {
+                            Box(
+                                modifier = Modifier.fillMaxWidth(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        } else {
+                            Text("No data available.")
+                        }
                     }
-
-
                 }
 
                 Card(

@@ -7,6 +7,7 @@ import app.contribs.data.model.Contribution
 import app.contribs.data.model.Election
 import app.contribs.data.model.ElectionSummary
 import app.contribs.data.model.PaginatedResponse
+import app.contribs.data.model.TopContributorsResponse
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -17,7 +18,6 @@ import java.util.concurrent.TimeUnit
 
 // 1. Define the endpoints that match your Django urls.py
 interface ContribsApiService {
-// ... existing methods
     @GET("candidates/")
     suspend fun getCandidates(
         @Query("page") page: Int = 1,
@@ -36,8 +36,12 @@ interface ContribsApiService {
     @GET("candidates/{id}/committees/")
     suspend fun getCandidateCommittees(@Path("id") id: String): List<Committee>
 
+    @GET("candidates/{id}/top_contributors/")
+    suspend fun getTopContributors(@Path("id") id: String): TopContributorsResponse
+
     @GET("committees/")
     suspend fun getCommittees(@Query("page") page: Int = 1): PaginatedResponse<Committee>
+
 
     @GET("committees/{id}/")
     suspend fun getCommitteeDetail(@Path("id") id: String): Committee
