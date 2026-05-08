@@ -4,9 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.contribs.data.api.RetrofitClient
 import app.contribs.data.model.Contribution
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.CancellationException
 
 enum class AmountFilter { ALL, SMALL, MEDIUM, LARGE, XLARGE }
 
@@ -43,6 +46,9 @@ class ContributionViewModel : ViewModel() {
     private val _selectedAmount = MutableStateFlow(AmountFilter.ALL)
     val selectedAmount: StateFlow<AmountFilter> = _selectedAmount
 
+    private var searchJob: Job? = null
+    private var fetchJob: Job? = null
+
     fun fetchContributionDetail(id: Int) {
         viewModelScope.launch {
             try {
@@ -60,19 +66,21 @@ class ContributionViewModel : ViewModel() {
     }
 
     fun fetchContributions(loadMore: Boolean = false) {
-        if (_isLoading.value || (!hasNextPage && loadMore)) return
+        if (loadMore && (_isLoading.value || !hasNextPage)) return
 
-        viewModelScope.launch {
+        if (!loadMore) {
+            fetchJob?.cancel()
+            currentPage = 1
+            hasNextPage = true
+            _contributions.value = emptyList()
+            applyFilters()
+        }
+
+        fetchJob = viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
 
             try {
-                if (!loadMore) {
-                    currentPage = 1
-                    hasNextPage = true
-                    _contributions.value = emptyList() // Clear for fresh search
-                }
-
                 val response = api.getContributions(
                     page = currentPage,
                     search = _searchQuery.value.takeIf { it.isNotEmpty() }
@@ -91,8 +99,10 @@ class ContributionViewModel : ViewModel() {
                 applyFilters()
 
             } catch (e: Exception) {
-                _error.value = "Failed to load contributions"
-                e.printStackTrace()
+                if (e !is CancellationException) {
+                    _error.value = "Failed to load contributions"
+                    e.printStackTrace()
+                }
             } finally {
                 _isLoading.value = false
             }
@@ -116,7 +126,11 @@ class ContributionViewModel : ViewModel() {
 
     fun setSearchQuery(query: String) {
         _searchQuery.value = query
-        fetchContributions(loadMore = false)
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            delay(400)
+            fetchContributions(loadMore = false)
+        }
     }
 
     fun clearFilters() {
@@ -133,14 +147,6 @@ class ContributionViewModel : ViewModel() {
 
     private fun applyFilters() {
         var result = _contributions.value
-
-        val query = _searchQuery.value.lowercase()
-        if (query.isNotEmpty()) {
-            result = result.filter {
-                it.contributorDetail?.formattedName?.lowercase()?.contains(query) == true ||
-                        it.committeeDetail?.name?.lowercase()?.contains(query) == true
-            }
-        }
 
         result = when (_selectedAmount.value) {
             AmountFilter.SMALL -> result.filter { (it.amount ?: 0.0) < 500.0 }

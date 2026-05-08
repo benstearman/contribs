@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.CancellationException
 
 class CandidateViewModel : ViewModel() {
 
@@ -36,6 +37,7 @@ class CandidateViewModel : ViewModel() {
     val topContributors: StateFlow<TopContributorsResponse?> = _topContributors.asStateFlow()
 
     private var searchJob: Job? = null
+    private var fetchJob: Job? = null
 
     private var filterState: String? = null
     private var filterOffice: String? = null
@@ -114,8 +116,13 @@ class CandidateViewModel : ViewModel() {
         // Stop if we are already fetching data, or if there is no more data to fetch
         if (isLoading || isLastPage) return
 
+        if (currentPage == 1) {
+            fetchJob?.cancel()
+            _candidates.value = emptyList()
+        }
+
         isLoading = true
-        viewModelScope.launch {
+        fetchJob = viewModelScope.launch {
             try {
                 // Fetch the specific page with search query and filters
                 val response = RetrofitClient.instance.getCandidates(
@@ -140,7 +147,9 @@ class CandidateViewModel : ViewModel() {
                     currentPage++
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
+                if (e !is CancellationException) {
+                    e.printStackTrace()
+                }
             } finally {
                 isLoading = false // Done loading, unlock for the next scroll
             }

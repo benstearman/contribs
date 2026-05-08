@@ -1,9 +1,46 @@
 from rest_framework import viewsets, permissions, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.db.models import Sum
+from rest_framework.pagination import PageNumberPagination
+from django.db import models, connection
+from django.db.models import Sum, Q
+from django.utils.functional import cached_property
+from django.core.paginator import Paginator
 from .models import Contributor, Contribution, Candidate, Committee, Party, Employer
 from rest_framework.views import APIView
+
+import re
+
+class FastCountPaginator(Paginator):
+    @cached_property
+    def count(self):
+        """
+        Optimized count for PostgreSQL using EXPLAIN to avoid slow COUNT(*).
+        """
+        if connection.vendor == 'postgresql':
+            try:
+                # Use EXPLAIN to get an estimated count from the query planner
+                with connection.cursor() as cursor:
+                    sql, params = self.object_list.query.sql_with_params()
+                    cursor.execute(f"EXPLAIN {sql}", params)
+                    explain_output = cursor.fetchone()[0]
+                    # The output usually contains 'rows=N'
+                    match = re.search(r'rows=(\d+)', explain_output)
+                    if match:
+                        count = int(match.group(1))
+                        # Only return estimate if it's significantly large
+                        if count > 1000:
+                            return count
+            except Exception:
+                # Fallback to a safe large number if explain fails
+                return 1000000
+        
+        # Fallback to standard count for small tables or non-Postgres
+        return super().count
+
+class FastCountPagination(PageNumberPagination):
+    django_paginator_class = FastCountPaginator
+    page_size = 10
 from .serializers import (
     ContributionSerializer, 
     ContributorSerializer, 
@@ -22,6 +59,7 @@ class CandidateViewSet(viewsets.ModelViewSet):
     """View and edit candidate details."""
     serializer_class = CandidateSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    pagination_class = FastCountPagination
 
     filter_backends = [filters.SearchFilter]
     search_fields = ['CAND_NAME']
@@ -91,26 +129,55 @@ class CommitteeViewSet(viewsets.ModelViewSet):
     queryset = Committee.objects.select_related('CAND_ID').all().order_by("CMTE_NM")
     serializer_class = CommitteeSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    pagination_class = FastCountPagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['CMTE_NM']
 
 class ContributionViewSet(viewsets.ModelViewSet):
     """View and edit individual contributions."""
-    # Optimizes deep joins for nested detail fields in the serializer
+    serializer_class = ContributionSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    pagination_class = FastCountPagination
+
+    # Optimized base queryset for joins
     queryset = Contribution.objects.select_related(
         'contributor', 
         'committee', 
         'committee__CAND_ID'
-    ).all().order_by("-receipt_date")
-    serializer_class = ContributionSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    ).all()
 
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['contributor__full_name', 'committee__CMTE_NM', 'committee__CAND_ID__CAND_NAME']
+    def get_queryset(self):
+        # Always start with a fresh queryset clone
+        queryset = Contribution.objects.select_related(
+            'contributor', 
+            'committee', 
+            'committee__CAND_ID'
+        ).all()
+        
+        search = self.request.query_params.get('search')
+        if search:
+            # Direct Index Filtering: Search parent tables first to maximize GIN index efficiency.
+            # Trigram indexes (gin_trgm_ops) make these lookups extremely fast even with millions of rows.
+            contributor_ids = Contributor.objects.filter(full_name__icontains=search).values_list('id', flat=True)[:1000]
+            committee_ids = Committee.objects.filter(CMTE_NM__icontains=search).values_list('CMTE_ID', flat=True)[:1000]
+            candidate_ids = Candidate.objects.filter(CAND_NAME__icontains=search).values_list('CAND_ID', flat=True)[:1000]
+
+            queryset = queryset.filter(
+                Q(contributor_id__in=contributor_ids) |
+                Q(committee_id__in=committee_ids) |
+                Q(committee__CAND_ID_id__in=candidate_ids)
+            )
+            
+        return queryset.order_by("-receipt_date")
 
 class ContributorViewSet(viewsets.ModelViewSet):
     """View and edit contributor profiles."""
     queryset = Contributor.objects.select_related('employer').all().order_by("full_name")
     serializer_class = ContributorSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    pagination_class = FastCountPagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['full_name']
 
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
