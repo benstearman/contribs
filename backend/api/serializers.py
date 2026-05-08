@@ -7,22 +7,27 @@ import os
 from django.conf import settings
 
 def load_legislator_data():
-    try:
-        file_path = os.path.join(settings.BASE_DIR, 'legislators-current.json')
-        with open(file_path, 'r') as f:
-            data = json.load(f)
+    fec_map = {}
+    
+    files = ['legislators-current.json', 'legislators-historical.json']
+    
+    for filename in files:
+        try:
+            file_path = os.path.join(settings.BASE_DIR, filename)
+            with open(file_path, 'r') as f:
+                data = json.load(f)
+                
+            for leg in data:
+                bioguide = leg.get('id', {}).get('bioguide')
+                fec_ids = leg.get('id', {}).get('fec', [])
+                if bioguide and fec_ids:
+                    for fec in fec_ids:
+                        fec_map[fec] = bioguide
+                        
+        except (FileNotFoundError, AttributeError):
+            print(f"WARNING: {filename} not found. Photos from this file won't load.")
             
-        fec_map = {}
-        for leg in data:
-            bioguide = leg.get('id', {}).get('bioguide')
-            fec_ids = leg.get('id', {}).get('fec', [])
-            if bioguide and fec_ids:
-                for fec in fec_ids:
-                    fec_map[fec] = bioguide
-        return fec_map
-    except (FileNotFoundError, AttributeError):
-        print("WARNING: legislators-current.json not found. Photos won't load.")
-        return {}
+    return fec_map
 
 FEC_TO_BIOGUIDE = load_legislator_data()
 

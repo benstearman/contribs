@@ -150,6 +150,6 @@ class ContributionViewModel : ViewModel() {
             AmountFilter.ALL -> result
         }
 
-       _filteredContributions.value = _contributions.value
+       _filteredContributions.value = result
     }
 }
