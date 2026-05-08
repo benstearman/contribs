@@ -27,21 +27,34 @@ class FastPaginator(Paginator):
     def count(self):
         if not hasattr(self, '_count') or self._count is None:
             try:
-                if hasattr(self.object_list, 'query'):
+                # Only use EXPLAIN for Postgres and when we have a queryset
+                if hasattr(self.object_list, 'query') and connection.vendor == 'postgresql':
                     with connection.cursor() as cursor:
-                        sql, params = self.object_list.query.sql_with_params()
+                        # Use the compiler to get the correct SQL and params
+                        compiler = self.object_list.query.get_compiler(connection.alias)
+                        sql, params = compiler.as_sql()
                         cursor.execute(f"EXPLAIN {sql}", params)
-                        result = cursor.fetchone()[0]
-                        # Extract row estimate from EXPLAIN output (e.g. "rows=1234567")
-                        match = re.search(r'rows=(\d+)', result)
-                        if match:
-                            self._count = int(match.group(1))
+                        
+                        # Fetch all rows and look for the estimate in the first one
+                        row = cursor.fetchone()
+                        if row:
+                            # Extract row estimate from EXPLAIN output (e.g. "rows=1234567")
+                            match = re.search(r'rows=(\d+)', str(row[0]))
+                            if match:
+                                self._count = int(match.group(1))
+                            else:
+                                self._count = super().count
                         else:
                             self._count = super().count
                 else:
                     self._count = super().count
-            except Exception:
-                self._count = super().count
+            except Exception as e:
+                # Log the error if possible, but always fallback to standard count
+                print(f"Pagination estimate failed: {e}")
+                try:
+                    self._count = super().count
+                except Exception:
+                    self._count = 0
         return self._count
 
 class FastCountPagination(PageNumberPagination):
@@ -219,18 +232,21 @@ class ElectionListView(APIView):
         state = request.query_params.get('state')
         office = request.query_params.get('office')
         
-        queryset = Candidate.objects.values(
+        queryset = Candidate.objects.all()
+
+        if state:
+            queryset = queryset.filter(CAND_OFFICE_ST=state)
+        if office:
+            queryset = queryset.filter(CAND_OFFICE=office)
+
+        # Aggregate AFTER filtering to keep it efficient
+        queryset = queryset.values(
             'CAND_ELECTION_YR', 
             'CAND_OFFICE_ST', 
             'CAND_OFFICE'
         ).annotate(
             total_amount=Sum('total_contributions')
         ).order_by('-total_amount')
-
-        if state:
-            queryset = queryset.filter(CAND_OFFICE_ST=state)
-        if office:
-            queryset = queryset.filter(CAND_OFFICE=office)
 
         results = [
             {
