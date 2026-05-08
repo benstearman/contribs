@@ -254,14 +254,6 @@ fun CandidateDetailScreen(
 
                         Spacer(modifier = Modifier.height(8.dp))
 
-                        // the leading donor or contributor to candidate
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text("Leading Donor")
-                            Text("coming soon...")
-                        }
                     }
                 }
 
