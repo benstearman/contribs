@@ -36,7 +36,6 @@ class CandidateViewModel : ViewModel() {
     val topContributors: StateFlow<TopContributorsResponse?> = _topContributors.asStateFlow()
 
     private var searchJob: Job? = null
-    private var fetchJob: Job? = null
 
     private var filterState: String? = null
     private var filterOffice: String? = null
@@ -113,12 +112,10 @@ class CandidateViewModel : ViewModel() {
 
     fun loadNextPage() {
         // Stop if we are already fetching data, or if there is no more data to fetch
-        if (isLastPage) return
+        if (isLoading || isLastPage) return
 
-        fetchJob?.cancel()
         isLoading = true
-        
-        fetchJob = viewModelScope.launch {
+        viewModelScope.launch {
             try {
                 // Fetch the specific page with search query and filters
                 val response = RetrofitClient.instance.getCandidates(
@@ -128,8 +125,6 @@ class CandidateViewModel : ViewModel() {
                     office = filterOffice,
                     year = filterYear
                 )
-                
-                kotlinx.coroutines.yield()
 
                 // If it's the first page, replace results. Otherwise, append.
                 if (currentPage == 1) {
@@ -145,9 +140,7 @@ class CandidateViewModel : ViewModel() {
                     currentPage++
                 }
             } catch (e: Exception) {
-                if (e !is kotlinx.coroutines.CancellationException) {
-                    e.printStackTrace()
-                }
+                e.printStackTrace()
             } finally {
                 isLoading = false // Done loading, unlock for the next scroll
             }

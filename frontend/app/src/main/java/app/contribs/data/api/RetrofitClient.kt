@@ -49,9 +49,7 @@ interface ContribsApiService {
     @GET("contributions/")
     suspend fun getContributions(
         @Query("page") page: Int = 1,
-        @Query("search") search: String? = null,
-        @Query("min_amount") minAmount: Double? = null,
-        @Query("max_amount") maxAmount: Double? = null
+        @Query("search") search: String? = null
     ): PaginatedResponse<Contribution>
 
     @GET("contributions/{id}/")
