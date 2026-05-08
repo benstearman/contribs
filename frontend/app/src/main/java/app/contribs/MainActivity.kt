@@ -149,18 +149,41 @@ fun ContribsBottomNavigation(navController: NavHostController) {
 
         bottomNavItems.forEach { screen ->
             val baseRoute = screen.route.substringBefore("?")
+
+            val isCandidatesFlow = baseRoute == "candidates" && 
+                currentDestination?.route?.startsWith("candidate_detail") == true
+            val isContributionsFlow = baseRoute == "contributions" && 
+                currentDestination?.route?.startsWith("contribution_detail") == true
+
+            val isSelected = currentDestination?.hierarchy?.any { it.route?.substringBefore("?") == baseRoute } == true ||
+                             isCandidatesFlow || isContributionsFlow
+
             NavigationBarItem(
                 icon = { Icon(screen.icon, contentDescription = null) },
                 label = { Text(screen.label) },
-                selected = currentDestination?.hierarchy?.any { it.route?.substringBefore("?") == baseRoute } == true,
+                selected = isSelected,
                 onClick = {
-                    val isStartDestination = screen == ContribsScreen.Elections
-                    navController.navigate(baseRoute) {
-                        popUpTo(navController.graph.findStartDestination().id) {
-                            saveState = !isStartDestination
+                    if (isSelected && currentDestination?.route != screen.route) {
+                        val popped = navController.popBackStack(screen.route, inclusive = false)
+                        if (!popped) {
+                            val isStartDestination = screen == ContribsScreen.Elections
+                            navController.navigate(baseRoute) {
+                                popUpTo(navController.graph.findStartDestination().id) {
+                                    saveState = !isStartDestination
+                                }
+                                launchSingleTop = true
+                                restoreState = !isStartDestination
+                            }
                         }
-                        launchSingleTop = true
-                        restoreState = !isStartDestination
+                    } else {
+                        val isStartDestination = screen == ContribsScreen.Elections
+                        navController.navigate(baseRoute) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = !isStartDestination
+                            }
+                            launchSingleTop = true
+                            restoreState = !isStartDestination
+                        }
                     }
                 }
             )
