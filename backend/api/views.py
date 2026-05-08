@@ -1,7 +1,11 @@
 from rest_framework import viewsets, permissions, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.db.models import Sum
+from django.db.models import Sum, Q
+from django.db import connection
+from django.core.paginator import Paginator
+from rest_framework.pagination import PageNumberPagination
+import re
 from .models import Contributor, Contribution, Candidate, Committee, Party, Employer
 from rest_framework.views import APIView
 from .serializers import (
@@ -12,27 +16,80 @@ from .serializers import (
     PartySerializer
 )
 
-class PartyViewSet(viewsets.ReadOnlyModelViewSet):
-    """View political party codes and names."""
-    queryset = Party.objects.all().order_by('id')
-    serializer_class = PartySerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+# --- Optimized Pagination ---
 
-class CandidateViewSet(viewsets.ModelViewSet):
-    """View and edit candidate details."""
-    serializer_class = CandidateSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+class FastPaginator(Paginator):
+    """
+    Uses PostgreSQL EXPLAIN to get a fast row count estimate for large tables.
+    Standard COUNT(*) is too slow on millions of records.
+    """
+    @property
+    def count(self):
+        if not hasattr(self, '_count') or self._count is None:
+            try:
+                if hasattr(self.object_list, 'query'):
+                    with connection.cursor() as cursor:
+                        sql, params = self.object_list.query.sql_with_params()
+                        cursor.execute(f"EXPLAIN {sql}", params)
+                        result = cursor.fetchone()[0]
+                        # Extract row estimate from EXPLAIN output (e.g. "rows=1234567")
+                        match = re.search(r'rows=(\d+)', result)
+                        if match:
+                            self._count = int(match.group(1))
+                        else:
+                            self._count = super().count
+                else:
+                    self._count = super().count
+            except Exception:
+                self._count = super().count
+        return self._count
 
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['CAND_NAME']
+class FastCountPagination(PageNumberPagination):
+    django_paginator_class = FastPaginator
+    page_size = 10
 
-    def get_queryset(self):
-        queryset = Candidate.objects.select_related('CAND_PTY_AFFILIATION').all().order_by("-total_contributions", "CAND_NAME")
+# --- Optimized Search & Filter Backends ---
+
+class OptimizedContributionSearchFilter(filters.BaseFilterBackend):
+    """
+    Optimized search for the multi-million row Contribution table.
+    Leverages Trigram GIN indexes on related tables to avoid slow multi-table joins.
+    """
+    search_param = 'search'
+
+    def filter_queryset(self, request, queryset, view):
+        search_query = request.query_params.get(self.search_param)
+        if not search_query or len(search_query) < 2:
+            return queryset
+            
+        # Use subqueries to keep filtering logic inside the database
+        contributor_subquery = Contributor.objects.filter(full_name__icontains=search_query).values('id')
+        candidate_subquery = Candidate.objects.filter(CAND_NAME__icontains=search_query).values('CAND_ID')
+        committee_subquery = Committee.objects.filter(
+            Q(CMTE_NM__icontains=search_query) | Q(CAND_ID__in=candidate_subquery)
+        ).values('CMTE_ID')
         
-        # Manual filtering for Election list navigation
-        state = self.request.query_params.get('state')
-        office = self.request.query_params.get('office')
-        year = self.request.query_params.get('year')
+        return queryset.filter(
+            Q(contributor__in=contributor_subquery) | Q(committee__in=committee_subquery)
+        )
+
+class ContributionAmountFilter(filters.BaseFilterBackend):
+    """Filters contributions by a dollar amount range."""
+    def filter_queryset(self, request, queryset, view):
+        min_amount = request.query_params.get('min_amount')
+        max_amount = request.query_params.get('max_amount')
+        if min_amount:
+            queryset = queryset.filter(amount__gte=min_amount)
+        if max_amount:
+            queryset = queryset.filter(amount__lte=max_amount)
+        return queryset
+
+class CandidateFilterBackend(filters.BaseFilterBackend):
+    """Handles state, office, and year filtering for candidates."""
+    def filter_queryset(self, request, queryset, view):
+        state = request.query_params.get('state')
+        office = request.query_params.get('office')
+        year = request.query_params.get('year')
         
         if state:
             queryset = queryset.filter(CAND_OFFICE_ST=state)
@@ -43,10 +100,29 @@ class CandidateViewSet(viewsets.ModelViewSet):
             
         return queryset
 
+# --- ViewSets ---
+
+class PartyViewSet(viewsets.ReadOnlyModelViewSet):
+    """View political party codes and names."""
+    queryset = Party.objects.all().order_by('id')
+    serializer_class = PartySerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+class CandidateViewSet(viewsets.ModelViewSet):
+    """View and edit candidate details with Trigram search and custom filters."""
+    serializer_class = CandidateSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    pagination_class = FastCountPagination
+    filter_backends = [filters.SearchFilter, CandidateFilterBackend]
+    search_fields = ['CAND_NAME']
+
+    def get_queryset(self):
+        return Candidate.objects.select_related('CAND_PTY_AFFILIATION').all().order_by("-total_contributions", "CAND_NAME")
+
     @action(detail=True, methods=['get'])
     def committees(self, request, pk=None):
-        candidate = self.get_object() # Finds the specific candidate
-        committees = candidate.committees.all() # Grabs their committees
+        candidate = self.get_object()
+        committees = candidate.committees.all()
         serializer = CommitteeSerializer(committees, many=True)
         return Response(serializer.data)
 
@@ -55,13 +131,11 @@ class CandidateViewSet(viewsets.ModelViewSet):
         candidate = self.get_object()
         committees = candidate.committees.all()
         
-        # Aggregate top individuals
         top_individuals = Contribution.objects.filter(committee__in=committees) \
             .values('contributor__full_name', 'contributor__employer__name') \
             .annotate(total=Sum('amount')) \
             .order_by('-total')[:10]
         
-        # Aggregate top employers
         top_employers = Contribution.objects.filter(committee__in=committees) \
             .values('contributor__employer__name') \
             .exclude(contributor__employer__name__isnull=True) \
@@ -87,30 +161,38 @@ class CandidateViewSet(viewsets.ModelViewSet):
     
 class CommitteeViewSet(viewsets.ModelViewSet):
     """View and edit committee details."""
-    # select_related avoids extra queries for the supported candidate
     queryset = Committee.objects.select_related('CAND_ID').all().order_by("CMTE_NM")
     serializer_class = CommitteeSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    pagination_class = FastCountPagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['CMTE_NM']
 
 class ContributionViewSet(viewsets.ModelViewSet):
-    """View and edit individual contributions."""
-    # Optimizes deep joins for nested detail fields in the serializer
-    queryset = Contribution.objects.select_related(
-        'contributor', 
-        'committee', 
-        'committee__CAND_ID'
-    ).all().order_by("-receipt_date")
+    """View and edit individual contributions with high-performance search."""
     serializer_class = ContributionSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    pagination_class = FastCountPagination
+    # Combined search and amount filtering
+    filter_backends = [OptimizedContributionSearchFilter, ContributionAmountFilter]
 
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['contributor__full_name', 'committee__CMTE_NM', 'committee__CAND_ID__CAND_NAME']
+    def get_queryset(self):
+        return Contribution.objects.select_related(
+            'contributor', 
+            'committee', 
+            'committee__CAND_ID'
+        ).all().order_by("-receipt_date")
 
 class ContributorViewSet(viewsets.ModelViewSet):
     """View and edit contributor profiles."""
     queryset = Contributor.objects.select_related('employer').all().order_by("full_name")
     serializer_class = ContributorSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    pagination_class = FastCountPagination
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['full_name']
+
+# --- Summary Views ---
 
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
@@ -121,10 +203,7 @@ class ElectionSummaryView(APIView):
 
     @method_decorator(cache_page(60*60*24))
     def get(self, request):
-        # Top 10 Employers by total donation amount
         top_employers = Employer.objects.exclude(name='').order_by('-total_contributions')[:10]
-        
-        # Top 10 Individual Contributors by total donation amount
         top_contributors = Contributor.objects.exclude(full_name='UNKNOWN').order_by('-total_contributions')[:10]
         
         return Response({
@@ -133,14 +212,13 @@ class ElectionSummaryView(APIView):
         })
 
 class ElectionListView(APIView):
-    """Returns a list of unique elections (year, state, office) filtered by query params, with total contributions."""
+    """Returns a list of unique elections (year, state, office) with total contributions."""
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def get(self, request):
         state = request.query_params.get('state')
         office = request.query_params.get('office')
         
-        # Group by year, state, office and sum candidate totals
         queryset = Candidate.objects.values(
             'CAND_ELECTION_YR', 
             'CAND_OFFICE_ST', 
@@ -172,7 +250,6 @@ class CandidateFiltersView(APIView):
     def get(self, request):
         states = Candidate.objects.exclude(CAND_OFFICE_ST__isnull=True).exclude(CAND_OFFICE_ST='').values_list('CAND_OFFICE_ST', flat=True).distinct().order_by('CAND_OFFICE_ST')
         
-        # Hardcoded based on model choices
         offices = [
             {"id": "H", "name": "House"},
             {"id": "S", "name": "Senate"},

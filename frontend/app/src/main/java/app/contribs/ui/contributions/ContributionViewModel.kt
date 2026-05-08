@@ -4,9 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.contribs.data.api.RetrofitClient
 import app.contribs.data.model.Contribution
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
 
 enum class AmountFilter { ALL, SMALL, MEDIUM, LARGE, XLARGE }
 
@@ -27,6 +30,9 @@ class ContributionViewModel : ViewModel() {
 
     private var currentPage = 1
     private var hasNextPage = true
+
+    private var fetchJob: Job? = null
+    private var searchJob: Job? = null
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery
@@ -60,9 +66,11 @@ class ContributionViewModel : ViewModel() {
     }
 
     fun fetchContributions(loadMore: Boolean = false) {
-        if (_isLoading.value || (!hasNextPage && loadMore)) return
+        if (!hasNextPage && loadMore) return
 
-        viewModelScope.launch {
+        fetchJob?.cancel() // Cancel ongoing fetch if starting a new search
+        
+        fetchJob = viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
 
@@ -70,13 +78,28 @@ class ContributionViewModel : ViewModel() {
                 if (!loadMore) {
                     currentPage = 1
                     hasNextPage = true
-                    _contributions.value = emptyList() // Clear for fresh search
+                    // Keep existing items until new ones arrive to prevent flickering if desired,
+                    // but for a fresh search, clearing is often better.
                 }
 
                 val response = api.getContributions(
                     page = currentPage,
-                    search = _searchQuery.value.takeIf { it.isNotEmpty() }
+                    search = _searchQuery.value.takeIf { it.isNotEmpty() },
+                    minAmount = when (_selectedAmount.value) {
+                        AmountFilter.MEDIUM -> 500.0
+                        AmountFilter.LARGE -> 2000.0
+                        AmountFilter.XLARGE -> 10000.0
+                        else -> null
+                    },
+                    maxAmount = when (_selectedAmount.value) {
+                        AmountFilter.SMALL -> 500.0
+                        AmountFilter.MEDIUM -> 2000.0
+                        AmountFilter.LARGE -> 5000.0
+                        else -> null
+                    }
                 )
+                
+                yield() // Check for cancellation
 
                 val updated = if (loadMore) {
                     _contributions.value + response.results
@@ -91,8 +114,10 @@ class ContributionViewModel : ViewModel() {
                 applyFilters()
 
             } catch (e: Exception) {
-                _error.value = "Failed to load contributions"
-                e.printStackTrace()
+                if (e !is kotlinx.coroutines.CancellationException) {
+                    _error.value = "Failed to load contributions"
+                    e.printStackTrace()
+                }
             } finally {
                 _isLoading.value = false
             }
@@ -101,7 +126,7 @@ class ContributionViewModel : ViewModel() {
 
     fun setAmountFilter(filter: AmountFilter) {
         _selectedAmount.value = if (_selectedAmount.value == filter) AmountFilter.ALL else filter
-        applyFilters()
+        fetchContributions(loadMore = false)
     }
 
     fun setPartyFilter(party: String?) {
@@ -116,7 +141,11 @@ class ContributionViewModel : ViewModel() {
 
     fun setSearchQuery(query: String) {
         _searchQuery.value = query
-        fetchContributions(loadMore = false)
+        searchJob?.cancel()
+        searchJob = viewModelScope.launch {
+            delay(400) // Debounce for 400ms
+            fetchContributions(loadMore = false)
+        }
     }
 
     fun clearFilters() {
@@ -132,24 +161,8 @@ class ContributionViewModel : ViewModel() {
     }
 
     private fun applyFilters() {
-        var result = _contributions.value
-
-        val query = _searchQuery.value.lowercase()
-        if (query.isNotEmpty()) {
-            result = result.filter {
-                it.contributorDetail?.formattedName?.lowercase()?.contains(query) == true ||
-                        it.committeeDetail?.name?.lowercase()?.contains(query) == true
-            }
-        }
-
-        result = when (_selectedAmount.value) {
-            AmountFilter.SMALL -> result.filter { (it.amount ?: 0.0) < 500.0 }
-            AmountFilter.MEDIUM -> result.filter { (it.amount ?: 0.0) in 500.0..2000.0 }
-            AmountFilter.LARGE -> result.filter { (it.amount ?: 0.0) in 2000.0..5000.0 }
-            AmountFilter.XLARGE -> result.filter { (it.amount ?: 0.0) > 10000.0 }
-            AmountFilter.ALL -> result
-        }
-
-       _filteredContributions.value = result
+        // We no longer filter by search query or amount locally because the API handles it
+        // and local filtering only works on the current page of data.
+        _filteredContributions.value = _contributions.value
     }
 }
