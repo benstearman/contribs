@@ -4,8 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.contribs.data.api.RetrofitClient
 import app.contribs.data.model.Contribution
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -44,8 +42,6 @@ class ContributionViewModel : ViewModel() {
 
     private val _selectedAmount = MutableStateFlow(AmountFilter.ALL)
     val selectedAmount: StateFlow<AmountFilter> = _selectedAmount
-
-    private var searchJob: Job? = null
 
     fun fetchContributionDetail(id: Int) {
         viewModelScope.launch {
@@ -120,11 +116,7 @@ class ContributionViewModel : ViewModel() {
 
     fun setSearchQuery(query: String) {
         _searchQuery.value = query
-        searchJob?.cancel()
-        searchJob = viewModelScope.launch {
-            delay(400) // Wait for user to stop typing
-            fetchContributions(loadMore = false)
-        }
+        fetchContributions(loadMore = false)
     }
 
     fun clearFilters() {
@@ -141,6 +133,14 @@ class ContributionViewModel : ViewModel() {
 
     private fun applyFilters() {
         var result = _contributions.value
+
+        val query = _searchQuery.value.lowercase()
+        if (query.isNotEmpty()) {
+            result = result.filter {
+                it.contributorDetail?.formattedName?.lowercase()?.contains(query) == true ||
+                        it.committeeDetail?.name?.lowercase()?.contains(query) == true
+            }
+        }
 
         result = when (_selectedAmount.value) {
             AmountFilter.SMALL -> result.filter { (it.amount ?: 0.0) < 500.0 }
