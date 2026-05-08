@@ -37,6 +37,7 @@ fun CandidateItem(
                 model = candidate.photoURL,
                 contentDescription = "Portrait of ${candidate.name}",
                 fallback = painterResource(R.drawable.default_portrait),
+                error = painterResource(R.drawable.default_portrait),
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
