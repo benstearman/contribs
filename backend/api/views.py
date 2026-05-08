@@ -24,6 +24,7 @@ class CandidateViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     filter_backends = [filters.SearchFilter]
+    # CAND_NAME has a GinIndex with gin_trgm_ops in models.py
     search_fields = ['CAND_NAME']
 
     def get_queryset(self):
@@ -87,30 +88,39 @@ class CandidateViewSet(viewsets.ModelViewSet):
     
 class CommitteeViewSet(viewsets.ModelViewSet):
     """View and edit committee details."""
-    # select_related avoids extra queries for the supported candidate
     queryset = Committee.objects.select_related('CAND_ID').all().order_by("CMTE_NM")
     serializer_class = CommitteeSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['CMTE_NM', 'CMTE_ID', 'TRES_NM']
 
 class ContributionViewSet(viewsets.ModelViewSet):
     """View and edit individual contributions."""
-    # Optimizes deep joins for nested detail fields in the serializer
     queryset = Contribution.objects.select_related(
         'contributor', 
         'committee', 
-        'committee__CAND_ID'
+        'committee__CAND_ID',
+        'contributor__employer'
     ).all().order_by("-receipt_date")
     serializer_class = ContributionSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     filter_backends = [filters.SearchFilter]
-    search_fields = ['contributor__full_name', 'committee__CMTE_NM', 'committee__CAND_ID__CAND_NAME']
+    # These fields leverage GIN trigram indexes on related models for optimized searching.
+    search_fields = [
+        'contributor__full_name', 
+        'contributor__employer__name', 
+        'committee__CMTE_NM', 
+        'committee__CAND_ID__CAND_NAME'
+    ]
 
 class ContributorViewSet(viewsets.ModelViewSet):
     """View and edit contributor profiles."""
     queryset = Contributor.objects.select_related('employer').all().order_by("full_name")
     serializer_class = ContributorSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['full_name', 'zip_code', 'employer__name']
 
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
@@ -121,10 +131,7 @@ class ElectionSummaryView(APIView):
 
     @method_decorator(cache_page(60*60*24))
     def get(self, request):
-        # Top 10 Employers by total donation amount
         top_employers = Employer.objects.exclude(name='').order_by('-total_contributions')[:10]
-        
-        # Top 10 Individual Contributors by total donation amount
         top_contributors = Contributor.objects.exclude(full_name='UNKNOWN').order_by('-total_contributions')[:10]
         
         return Response({
@@ -133,14 +140,13 @@ class ElectionSummaryView(APIView):
         })
 
 class ElectionListView(APIView):
-    """Returns a list of unique elections (year, state, office) filtered by query params, with total contributions."""
+    """Returns a list of unique elections (year, state, office) filtered by query params."""
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def get(self, request):
         state = request.query_params.get('state')
         office = request.query_params.get('office')
         
-        # Group by year, state, office and sum candidate totals
         queryset = Candidate.objects.values(
             'CAND_ELECTION_YR', 
             'CAND_OFFICE_ST', 
@@ -171,8 +177,6 @@ class CandidateFiltersView(APIView):
 
     def get(self, request):
         states = Candidate.objects.exclude(CAND_OFFICE_ST__isnull=True).exclude(CAND_OFFICE_ST='').values_list('CAND_OFFICE_ST', flat=True).distinct().order_by('CAND_OFFICE_ST')
-        
-        # Hardcoded based on model choices
         offices = [
             {"id": "H", "name": "House"},
             {"id": "S", "name": "Senate"},

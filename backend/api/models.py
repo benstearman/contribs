@@ -57,6 +57,11 @@ class Employer(models.Model):
     name = models.CharField(max_length=200, unique=True, db_index=True)
     total_contributions = models.DecimalField("Total Contributions", max_digits=14, decimal_places=2, default=0.00)
 
+    class Meta:
+        indexes = [
+            GinIndex(fields=['name'], name='employer_name_trgm_idx', opclasses=['gin_trgm_ops']),
+        ]
+
     def __str__(self):
         return self.name
 
@@ -213,6 +218,8 @@ class FECContribution(models.Model):
             models.Index(fields=["NAME"]),
             models.Index(fields=["TRANSACTION_DT"]),
             models.Index(fields=["TRANSACTION_AMT"]),
+            GinIndex(fields=['NAME'], name='fec_name_trgm_idx', opclasses=['gin_trgm_ops']),
+            GinIndex(fields=['EMPLOYER'], name='fec_emp_trgm_idx', opclasses=['gin_trgm_ops']),
         ]
 
     def __str__(self):
