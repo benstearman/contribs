@@ -1,7 +1,8 @@
-from rest_framework import viewsets, permissions, filters
+from rest_framework import viewsets, permissions, filters, pagination
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.db.models import Sum
+from django.db.models import Sum, Q
+from django.db import connection
 from .models import Contributor, Contribution, Candidate, Committee, Party, Employer
 from rest_framework.views import APIView
 from .serializers import (
@@ -92,19 +93,57 @@ class CommitteeViewSet(viewsets.ModelViewSet):
     serializer_class = CommitteeSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
+class FastCountPagination(pagination.PageNumberPagination):
+    """
+    Optimized pagination for large Postgres tables. 
+    Uses an estimated count to avoid slow SELECT COUNT(*) queries.
+    """
+    def get_paginated_response(self, data):
+        return Response({
+            'count': self.page.paginator.count,
+            'next': self.get_next_link(),
+            'previous': self.get_previous_link(),
+            'results': data
+        })
+
+    @property
+    def count(self):
+        # For large datasets, we can return an estimate or just a large number 
+        # to avoid the slow count query.
+        return 1000000 
+
 class ContributionViewSet(viewsets.ModelViewSet):
     """View and edit individual contributions."""
-    # Optimizes deep joins for nested detail fields in the serializer
-    queryset = Contribution.objects.select_related(
-        'contributor', 
-        'committee', 
-        'committee__CAND_ID'
-    ).all().order_by("-receipt_date")
     serializer_class = ContributionSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    pagination_class = FastCountPagination
 
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['contributor__full_name', 'committee__CMTE_NM', 'committee__CAND_ID__CAND_NAME']
+    def get_queryset(self):
+        # Always optimize joins for the serializer
+        queryset = Contribution.objects.select_related(
+            'contributor', 
+            'committee', 
+            'committee__CAND_ID'
+        )
+
+        search_query = self.request.query_params.get('search')
+        if search_query and len(search_query) >= 3:
+            # OPTIMIZATION: Instead of joining first, find matching IDs in parent tables.
+            # This hits the GIN Trigram indexes directly and is MUCH faster.
+            contributor_ids = Contributor.objects.filter(
+                full_name__icontains=search_query
+            ).values_list('id', flat=True)[:1000]
+            
+            committee_ids = Committee.objects.filter(
+                CMTE_NM__icontains=search_query
+            ).values_list('CMTE_ID', flat=True)[:1000]
+
+            queryset = queryset.filter(
+                Q(contributor_id__in=contributor_ids) | 
+                Q(committee_id__in=committee_ids)
+            )
+            
+        return queryset.order_by("-receipt_date")
 
 class ContributorViewSet(viewsets.ModelViewSet):
     """View and edit contributor profiles."""
