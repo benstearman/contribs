@@ -1,3 +1,9 @@
+---
+title: Contribs.app - Political Contribution Transparency
+description: Empowering financial transparency in politics. Track political contributions, follow the money, and explore election financing with our open-source engine.
+image: social-1840x920.png
+---
+
 # Contribs.app
 
 ## Empowering Financial Transparency in Politics

@@ -1,5 +1,6 @@
 site_name: Contribs.app
-site_description: An open-source legislative contribution tracker.
+site_url: https://contribs.app
+site_description: Empowering financial transparency in politics. Track political contributions and follow the money with our open-source transparency engine.
 docs_dir: landing
 theme:
   name: material
@@ -10,3 +11,7 @@ theme:
 nav:
   - Home: index.md
   - User Guide: user-guide.md
+
+plugins:
+  - search
+  - social
