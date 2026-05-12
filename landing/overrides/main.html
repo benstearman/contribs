@@ -1,17 +1,18 @@
 {% extends "base.html" %}
 
 {% block extrahead %}
-  <!-- Open Graph / Facebook -->
+  <!-- Open Graph / Facebook / Pinterest -->
   <meta property="og:type" content="website">
   <meta property="og:url" content="{{ config.site_url }}">
-  <meta property="og:title" content="{{ page.title if page and page.title else config.site_name }}">
+  <meta property="og:site_name" content="{{ config.site_name }}">
+  <meta property="og:title" content="{% if page and page.title and page.title != 'Home' %}{{ page.title }} - {{ config.site_name }}{% else %}{{ config.site_name }} - Political Contribution Transparency{% endif %}">
   <meta property="og:description" content="{{ page.meta.description if page and page.meta.description else config.site_description }}">
   <meta property="og:image" content="{{ config.site_url }}social-1840x920.png">
 
   <!-- Twitter -->
-  <meta property="twitter:card" content="summary_large_image">
-  <meta property="twitter:url" content="{{ config.site_url }}">
-  <meta property="twitter:title" content="{{ page.title if page and page.title else config.site_name }}">
-  <meta property="twitter:description" content="{{ page.meta.description if page and page.meta.description else config.site_description }}">
-  <meta property="twitter:image" content="{{ config.site_url }}social-1840x920.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="{{ config.site_url }}">
+  <meta name="twitter:title" content="{% if page and page.title and page.title != 'Home' %}{{ page.title }} - {{ config.site_name }}{% else %}{{ config.site_name }} - Political Contribution Transparency{% endif %}">
+  <meta name="twitter:description" content="{{ page.meta.description if page and page.meta.description else config.site_description }}">
+  <meta name="twitter:image" content="{{ config.site_url }}social-1840x920.png">
 {% endblock %}
