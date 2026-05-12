@@ -26,6 +26,26 @@ image: social-1840x920.png
 
 ---
 
+### Learn How it Works
+
+New to political finance tracking? Check out our comprehensive guide to get the most out of the platform.
+
+[**Read the User Guide**](user-guide.md)
+
+### Open Source & Licensing
+
+Contribs.app is committed to the principles of open data. This project is licensed under the **MIT License**, which allows for broad reuse, modification, and distribution.
+
+[**View the MIT License**](license.md)
+
+### Join the Community
+
+Our code is fully open-source and hosted on GitHub. We welcome contributions, bug reports, and feature requests from the community.
+
+[**Visit the GitHub Repository**](https://github.com/benstearman/contribs)
+
+---
+
 ### Get Started
 
 Download our latest prototype and start exploring the data today.

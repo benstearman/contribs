@@ -17,6 +17,7 @@ theme:
 nav:
   - Home: index.md
   - User Guide: user-guide.md
+  - License: license.md
 extra:
   social:
     - icon: fontawesome/brands/github
