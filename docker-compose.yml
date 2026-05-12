@@ -70,6 +70,8 @@ services:
     image: squidfunk/mkdocs-material
     container_name: contribs_wiki
     restart: unless-stopped
+    command: >
+      sh -c "mkdocs build && python3 -m http.server 8000 --directory site"
     volumes:
       - ./:/docs
     networks:

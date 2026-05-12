@@ -1,17 +1,23 @@
 site_name: Contribs.app
-site_url: https://contribs.app
+site_url: https://contribs.app/
 site_description: Empowering financial transparency in politics. Track political contributions and follow the money with our open-source transparency engine.
 docs_dir: landing
+use_directory_urls: true
 theme:
   name: material
+  custom_dir: landing/overrides
   palette:
     scheme: default
     primary: indigo
     accent: indigo
+  features:
+    - navigation.sections
+    - navigation.expand
+    - content.code.copy
 nav:
   - Home: index.md
   - User Guide: user-guide.md
-
-plugins:
-  - search
-  - social
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/benstearman/contribs
