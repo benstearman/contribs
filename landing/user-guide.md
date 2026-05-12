@@ -36,7 +36,7 @@ Contribs uses a bottom navigation bar with four buttons: **Elections**, **Candid
 The Elections page gives users a high-level view of political activity by state and office. Users can filter the displayed data using state and office filters. The page displays the top current elections, the top 10 contributors, and the top 10 employers contributing to those elections — all sorted from highest to lowest contribution amounts.
 
 **Candidates**
-The Candidates page displays a list of all candidates currently in the database. Tapping a candidate opens their detail page with further information. Party filter chips can be used to filter candidates by party: Republican, Democrat, Independent and Other.
+The Candidates page displays a list of all candidates currently in the database. Tapping a candidate opens their detail page with further information.
 
 **Contributions**
 The Contributions page displays a list of political contributions. Users can filter contributions by amount using filter chips at the top of the screen. Tapping a contribution opens a contribution detail page with more information about that contribution.
