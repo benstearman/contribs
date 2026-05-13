@@ -30,6 +30,8 @@ Contribs aggregates and presents United States political contribution data from 
 ## 📖 Documentation
 
 - **[User Guide](landing/user-guide.md):** Detailed instructions on how to use the app, understand the data definitions, and explore the features.
+- **[Architecture](landing/architecture.md):** Technical stack, system diagrams, and infrastructure overview.
+- **[Design Document](landing/design.md):** Project overview, software design patterns, and data model definitions.
 
 ## 🚀 Getting Started
 
