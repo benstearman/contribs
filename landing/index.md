@@ -50,7 +50,7 @@ Our code is fully open-source and hosted on GitHub. We welcome contributions, bu
 
 Download our latest prototype and start exploring the data today.
 
-[**Download the Android APK (Latest Release)**](https://github.com/benstearman/contribs/releases/latest)
+[**Download the Android APK (Release) (Latest Release)**](https://github.com/benstearman/contribs/releases/latest)
 
 ---
 
